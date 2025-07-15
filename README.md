@@ -189,5 +189,22 @@ export ADMIN_PASSWORD="your-password"
 uvicorn app.main:app --reload
 ```
 
+### Rust Analysis Service
+
+In addition to the FastAPI backend, a standalone Rust microservice provides
+fast data analysis using the Polars library. It exposes an `/analysis` endpoint
+that accepts an Excel file upload and returns column statistics. A line chart of
+the first numeric column is encoded as base64 in the `Chart` response header.
+
+To build and run it:
+
+```bash
+cd analysis_service
+cargo build --release
+./target/release/analysis_service
+```
+
 The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
 You can also set the model used for completions by editing the `openrouter_model` value in `app/config.json` or via the admin page.
+
+The FastAPI backend exposes `/custom_analysis` which uploads an Excel file and asks the LLM to produce Rust code for just-in-time analysis using Polars. The generated program is compiled and executed on the server, and the JSON results are returned to the caller.
