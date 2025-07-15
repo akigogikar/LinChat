@@ -10,6 +10,7 @@ import os
 
 from .db import init_db, add_document, add_chunks
 from .ingest import parse_file
+from . import vector_db
 
 app = FastAPI()
 
@@ -18,6 +19,7 @@ app = FastAPI()
 def _startup():
     """Initialize the database on startup."""
     init_db()
+    vector_db._get_client()
 security = HTTPBasic()
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
@@ -81,6 +83,13 @@ async def query_llm(prompt: str):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@app.get("/search")
+async def search_docs(query: str, top_k: int = 5):
+    """Retrieve relevant document chunks from the vector DB."""
+    results = vector_db.query(query, top_k=top_k)
+    return {"results": results}
+
+
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page(auth: bool = Depends(_require_admin)):
     conf = _read_config()
@@ -122,5 +131,6 @@ async def upload_file(file: UploadFile = File(...)):
     # Persist to database
     document_id = add_document(stored_name)
     add_chunks(document_id, [(c.get("page"), c.get("text")) for c in parsed_chunks])
+    vector_db.add_embeddings(document_id, parsed_chunks)
 
     return {"document_id": document_id, "chunks": len(parsed_chunks)}
