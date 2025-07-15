@@ -260,3 +260,48 @@ Example manifests are provided in the `k8s` directory. After building and pushin
 kubectl apply -f k8s
 ```
 
+## API Documentation
+
+LinChat's FastAPI backend exposes an OpenAPI schema and interactive Swagger UI.
+Once the server is running, navigate to <http://localhost:8000/docs> to explore
+all available endpoints. The ReDoc view is available at
+<http://localhost:8000/redoc>. A copy of the generated schema is included in
+`docs/openapi.json` and can be regenerated with:
+
+```bash
+python scripts/generate_openapi.py
+```
+
+## Tutorials & Examples
+
+Below are a few example workflows to help you get started with common research
+tasks.
+
+### Summarize Documents
+
+1. Upload one or more files via `/upload` or the frontend.
+2. Call `/summarize` with a prompt like `"Summarize the key findings"` to receive
+   a structured summary with citations.
+
+### Generate Tables and Slides
+
+* Use `/generate_table` to request tabular data from the LLM, then `/export/excel`
+  to download the results as an Excel file.
+* Use `/generate_slides` to create a slide deck structure which can be exported
+  to PowerPoint via `/export/pptx`.
+
+### Custom Data Analysis
+
+Upload an Excel file and send a prompt to `/custom_analysis`. LinChat will
+generate and execute Rust code using Polars to return the requested analytics
+along with a chart in the response headers.
+
+### Running Tests
+
+The project includes a pytest suite. After installing the requirements, run:
+
+```bash
+pytest -q
+```
+
+
