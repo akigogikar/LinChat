@@ -7,3 +7,6 @@ openpyxl
 python-pptx
 chromadb
 sentence-transformers
+playwright
+beautifulsoup4
+httpx

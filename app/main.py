@@ -11,6 +11,7 @@ import os
 from .db import init_db, add_document, add_chunks
 from .ingest import parse_file
 from . import vector_db
+from .scraper import scrape_url, scrape_search
 
 app = FastAPI()
 
@@ -88,6 +89,22 @@ async def search_docs(query: str, top_k: int = 5):
     """Retrieve relevant document chunks from the vector DB."""
     results = vector_db.query(query, top_k=top_k)
     return {"results": results}
+
+
+@app.post("/internal/scrape")
+async def scrape_endpoint(url: str = None, query: str = None):
+    """Scrape a URL directly or via search."""
+    if not url and not query:
+        raise HTTPException(status_code=400, detail="url or query required")
+    if query and not url:
+        scraped = await scrape_search(query, max_results=1)
+        if not scraped:
+            raise HTTPException(status_code=404, detail="No results")
+        url = scraped[0]
+    content = await scrape_url(url)
+    if content is None:
+        raise HTTPException(status_code=500, detail="Failed to scrape")
+    return {"url": url, "length": len(content)}
 
 
 @app.get("/admin", response_class=HTMLResponse)

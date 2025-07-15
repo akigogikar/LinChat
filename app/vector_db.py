@@ -1,5 +1,5 @@
 import os
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Optional
 
 from chromadb import PersistentClient
 from chromadb.config import Settings
@@ -55,6 +55,19 @@ def add_embeddings(document_id: int, chunks: Iterable[Dict]) -> None:
     embeddings = model.encode(texts).tolist()
     collection.add(documents=texts, embeddings=embeddings, ids=ids, metadatas=metadata)
 
+def add_web_embeddings(url: str, text: str) -> None:
+    """Embed and store web page text with URL metadata."""
+    collection = _get_collection()
+    model = _get_model()
+    embedding = model.encode([text]).tolist()
+    collection.add(
+        documents=[text],
+        embeddings=embedding,
+        ids=[url],
+        metadatas=[{"url": url}],
+    )
+
+
 def query(text: str, top_k: int = 5) -> List[Dict]:
     """Return the most relevant chunks for the given text query."""
     collection = _get_collection()
@@ -62,17 +75,26 @@ def query(text: str, top_k: int = 5) -> List[Dict]:
     query_emb = model.encode([text]).tolist()
     results = collection.query(query_embeddings=query_emb, n_results=top_k)
     out: List[Dict] = []
-    for chunk_id, doc, meta in zip(results["ids"][0], results["documents"][0], results["metadatas"][0]):
+    for chunk_id, doc, meta in zip(
+        results["ids"][0], results["documents"][0], results["metadatas"][0]
+    ):
         out.append({
             "id": chunk_id,
             "text": doc,
             "document_id": meta.get("document_id"),
             "page": meta.get("page"),
+            "url": meta.get("url"),
         })
     return out
 
 def get_context(prompt: str, top_k: int = 5) -> str:
     """Return a concatenated text block for LLM context retrieval."""
     chunks = query(prompt, top_k=top_k)
-    lines = [f"(Doc {c['document_id']} page {c['page']}) {c['text']}" for c in chunks]
+    lines = []
+    for c in chunks:
+        if c.get("url"):
+            prefix = f"(URL {c['url']})"
+        else:
+            prefix = f"(Doc {c['document_id']} page {c['page']})"
+        lines.append(f"{prefix} {c['text']}")
     return "\n\n".join(lines)
