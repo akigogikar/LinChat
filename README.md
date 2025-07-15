@@ -227,3 +227,15 @@ Users can register and log in using JWT cookies powered by **fastapi-users**. Af
 Administrators can view registered users and recent audit logs in the `/admin` dashboard.
 
 The FastAPI backend exposes `/custom_analysis` which uploads an Excel file and asks the LLM to produce Rust code for just-in-time analysis using Polars. The generated program is compiled and executed on the server, and the JSON results are returned to the caller.
+
+### Frontend SPA
+
+A simple React application lives in `frontend/` and communicates with the FastAPI
+endpoints. It supports uploading documents, asking questions, viewing cited
+sources, generating tables and charts, and exporting a PDF. To run it locally:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
