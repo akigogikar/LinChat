@@ -118,6 +118,9 @@ Audit trails for data security
 Self-hostable or private cloud
 No user data leaks to public APIs
 Encryption at rest & in transit
+When self-hosting you should enable disk encryption or use an encrypted
+database such as SQLCipher to protect data at rest. Always serve the API over
+HTTPS in production.
 Full compliance (SOC2, GDPR, etc.)
 → A trusted research assistant.
 
@@ -206,6 +209,16 @@ cargo build --release
 
 The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
 You can also set the model used for completions by editing the `openrouter_model` value in `app/config.json` or via the admin page.
+
+### Environment Configuration
+
+LinChat reads configuration from environment variables so it can run in different
+deployments. Set `LINCHAT_ENV` to `development` or `production` to load
+`app/config.<env>.json` if present. Database and vector store locations can be
+overridden with `LINCHAT_DB_FILE` and `LINCHAT_VECTOR_DIR`. Logging is
+configured via `LOG_LEVEL` and `LOG_FILE` which write structured logs that also
+populate the audit trail tables. For HTTPS deployments pass `--ssl-keyfile` and
+`--ssl-certfile` to `uvicorn` or use a reverse proxy with TLS termination.
 
 ### Authentication & Teams
 

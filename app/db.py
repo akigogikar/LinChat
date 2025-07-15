@@ -3,7 +3,10 @@ import sqlite3
 from typing import Iterable, Tuple, List, Optional
 from datetime import datetime
 
-DB_FILE = os.path.join(os.path.dirname(__file__), "data.db")
+DB_FILE = os.getenv(
+    "LINCHAT_DB_FILE",
+    os.path.join(os.path.dirname(__file__), "data.db"),
+)
 
 
 def init_db() -> None:

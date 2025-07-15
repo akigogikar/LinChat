@@ -5,7 +5,10 @@ from chromadb import PersistentClient
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
-DB_DIR = os.path.join(os.path.dirname(__file__), "chroma")
+DB_DIR = os.getenv(
+    "LINCHAT_VECTOR_DIR",
+    os.path.join(os.path.dirname(__file__), "chroma"),
+)
 COLLECTION_NAME = "documents"
 
 _client = None

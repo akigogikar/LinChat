@@ -6,6 +6,8 @@ use plotters::prelude::*;
 use serde::Serialize;
 use calamine::{Reader, open_workbook_auto_from_rs, Data};
 use std::net::SocketAddr;
+use tracing::{info, error};
+
 
 #[derive(Serialize)]
 struct Stats {
@@ -26,6 +28,7 @@ async fn analyze(mut multipart: Multipart) -> Result<Response, StatusCode> {
             }
         }
     }
+    info!("received analysis request");
 
     let data = data.ok_or(StatusCode::BAD_REQUEST)?;
     // Read Excel data using calamine and convert to Polars DataFrame
@@ -120,10 +123,13 @@ async fn analyze(mut multipart: Multipart) -> Result<Response, StatusCode> {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     let app = Router::new().route("/analysis", post(analyze));
     let addr = SocketAddr::from(([0, 0, 0, 0], 8001));
-    println!("Listening on {addr}");
+    info!("Listening on {addr}");
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    if let Err(e) = axum::serve(listener, app).await {
+        error!(?e, "server error");
+    }
 }
 
