@@ -2,3 +2,4 @@ __pycache__/
 uploads/
 analysis_service/target/
 analysis_agent_*/
+frontend/node_modules/
