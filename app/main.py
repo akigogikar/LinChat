@@ -10,7 +10,7 @@ import json
 import os
 import re
 
-from .db import init_db, add_document, add_chunks
+from .db import init_db, add_document, add_chunks, list_documents, add_audit_log
 from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
@@ -26,8 +26,34 @@ from .reporting import (
     Table as TableSchema,
     SlideDeck,
 )
+from .auth import (
+    fastapi_users,
+    auth_backend,
+    UserCreate,
+    UserRead,
+    UserUpdate,
+    current_active_user,
+)
+from .database import async_session_maker
+from .models import User, AuditLog
+from sqlalchemy import select
 
 app = FastAPI()
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users",
+    tags=["users"],
+)
 
 # In-memory store of citation metadata keyed by request ID
 CITATION_STORE: dict = {}
@@ -47,6 +73,12 @@ def _startup():
     """Initialize the database on startup."""
     init_db()
     vector_db._get_client()
+    import asyncio
+    from .database import engine, Base
+    async def create_tables():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    asyncio.get_event_loop().run_until_complete(create_tables())
 security = HTTPBasic()
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
@@ -197,10 +229,15 @@ async def scrape_endpoint(url: str = None, query: str = None):
 
 
 @app.get("/admin", response_class=HTMLResponse)
-def admin_page(auth: bool = Depends(_require_admin)):
+async def admin_page(auth: bool = Depends(_require_admin)):
     conf = _read_config()
     key = conf.get("openrouter_api_key", "")
     model = conf.get("openrouter_model", _get_model())
+    async with async_session_maker() as session:
+        users = (await session.execute(select(User))).scalars().all()
+        logs = (await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20))).scalars().all()
+    user_rows = "".join(f"<li>{u.email}</li>" for u in users)
+    log_rows = "".join(f"<li>{l.timestamp}: {l.user_id} - {l.action}</li>" for l in logs)
     return HTMLResponse(
         f"""<html><body>
         <h1>Admin Config</h1>
@@ -211,6 +248,10 @@ def admin_page(auth: bool = Depends(_require_admin)):
             <input type='text' name='model' value='{model}'/><br/>
             <input type='submit' value='Save'/>
         </form>
+        <h2>Users</h2>
+        <ul>{user_rows}</ul>
+        <h2>Audit Logs</h2>
+        <ul>{log_rows}</ul>
         </body></html>"""
     )
 
@@ -229,8 +270,18 @@ def set_key(
     return {"status": "saved"}
 
 
+@app.get("/documents")
+async def get_documents(user=Depends(current_active_user)):
+    docs = list_documents(user.id, user.team_id)
+    return {"documents": [{"id": d[0], "filename": d[1]} for d in docs]}
+
+
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(
+    file: UploadFile = File(...),
+    shared: bool = Form(False),
+    user=Depends(current_active_user),
+):
     """Accept a file upload, store it, parse and persist chunks."""
     os.makedirs("uploads", exist_ok=True)
     ext = os.path.splitext(file.filename)[1]
@@ -244,7 +295,8 @@ async def upload_file(file: UploadFile = File(...)):
     parsed_chunks: List[dict] = parse_file(save_path)
 
     # Persist to database
-    document_id = add_document(stored_name)
+    document_id = add_document(stored_name, owner_id=user.id, team_id=user.team_id, shared=shared)
+    add_audit_log(user.id, f"upload:{stored_name}")
     add_chunks(document_id, [(c.get("page"), c.get("text")) for c in parsed_chunks])
     vector_db.add_embeddings(document_id, parsed_chunks)
 

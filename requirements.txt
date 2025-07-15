@@ -13,3 +13,4 @@ httpx
 markdown
 pandas
 weasyprint
+fastapi-users[sqlalchemy]
