@@ -207,4 +207,10 @@ cargo build --release
 The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
 You can also set the model used for completions by editing the `openrouter_model` value in `app/config.json` or via the admin page.
 
+### Authentication & Teams
+
+Users can register and log in using JWT cookies powered by **fastapi-users**. After authentication you can upload documents and choose to share them with your team. The `/documents` endpoint lists private files plus any that teammates shared with the workspace.
+
+Administrators can view registered users and recent audit logs in the `/admin` dashboard.
+
 The FastAPI backend exposes `/custom_analysis` which uploads an Excel file and asks the LLM to produce Rust code for just-in-time analysis using Polars. The generated program is compiled and executed on the server, and the JSON results are returned to the caller.
