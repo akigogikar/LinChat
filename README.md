@@ -178,3 +178,15 @@ Export:
 PDF
 Excel
 PPT
+
+## Getting Started
+
+This repository contains the initial code for a FastAPI service that integrates with [OpenRouter](https://openrouter.ai/) for language model access. To run the development server:
+
+```bash
+pip install -r requirements.txt
+export ADMIN_PASSWORD="your-password"
+uvicorn app.main:app --reload
+```
+
+The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
