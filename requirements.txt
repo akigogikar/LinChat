@@ -10,3 +10,6 @@ sentence-transformers
 playwright
 beautifulsoup4
 httpx
+markdown
+pandas
+weasyprint
