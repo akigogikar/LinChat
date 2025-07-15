@@ -7,6 +7,7 @@ import uuid
 import openai
 import json
 import os
+import re
 
 from .db import init_db, add_document, add_chunks
 from .ingest import parse_file
@@ -14,6 +15,18 @@ from . import vector_db
 from .scraper import scrape_url, scrape_search
 
 app = FastAPI()
+
+# In-memory store of citation metadata keyed by request ID
+CITATION_STORE: dict = {}
+
+
+def _insert_links(text: str, req_id: str) -> str:
+    """Replace [id] citations with clickable links."""
+    def repl(match: re.Match) -> str:
+        cid = match.group(1)
+        return f"<a href='/source/{req_id}/{cid}'>[{cid}]</a>"
+
+    return re.sub(r"\[(\d+)\]", repl, text)
 
 
 @app.on_event("startup")
@@ -88,7 +101,8 @@ async def query_llm(
     openai.api_key = _get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
 
-    context = vector_db.get_context(prompt, top_k=top_k)
+    request_id = str(uuid.uuid4())
+    context, sources = vector_db.get_context(prompt, top_k=top_k)
 
     scraped_text = ""
     if search and not url:
@@ -99,15 +113,22 @@ async def query_llm(
     if url:
         scraped_text = await scrape_url(url) or ""
 
+    prefix = f"Question: {prompt}\n\nContext:\n"
+    # update source offsets relative to full user message
+    for src in sources:
+        src["offset_start"] += len(prefix)
+        src["offset_end"] += len(prefix)
+
+    CITATION_STORE[request_id] = {src["id"]: src for src in sources}
+
+    user_content = f"{prefix}{context}\n\nScraped:\n{scraped_text}"
+
     messages = [
         {
             "role": "system",
-            "content": "Use the provided context and scraped text to answer the user question. Cite sources when relevant.",
+            "content": "Use the provided context and scraped text to answer the user question. Cite sources using [id] notation.",
         },
-        {
-            "role": "user",
-            "content": f"Question: {prompt}\n\nContext:\n{context}\n\nScraped:\n{scraped_text}",
-        },
+        {"role": "user", "content": user_content},
     ]
 
     try:
@@ -115,7 +136,9 @@ async def query_llm(
             model=_get_model(),
             messages=messages,
         )
-        return {"response": completion.choices[0].message["content"]}
+        raw = completion.choices[0].message["content"]
+        response_text = _insert_links(raw, request_id)
+        return {"response": response_text, "request_id": request_id}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -125,6 +148,23 @@ async def search_docs(query: str, top_k: int = 5):
     """Retrieve relevant document chunks from the vector DB."""
     results = vector_db.query(query, top_k=top_k)
     return {"results": results}
+
+
+@app.get("/source/{req_id}/{cid}")
+def get_source(req_id: str, cid: str):
+    """Return the stored source excerpt for a citation ID."""
+    info = CITATION_STORE.get(req_id, {}).get(cid)
+    if not info:
+        raise HTTPException(status_code=404, detail="Citation not found")
+    return {
+        "id": cid,
+        "text": info.get("text"),
+        "document_id": info.get("document_id"),
+        "page": info.get("page"),
+        "url": info.get("url"),
+        "offset_start": info.get("offset_start"),
+        "offset_end": info.get("offset_end"),
+    }
 
 
 @app.post("/internal/scrape")

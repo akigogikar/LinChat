@@ -87,14 +87,32 @@ def query(text: str, top_k: int = 5) -> List[Dict]:
         })
     return out
 
-def get_context(prompt: str, top_k: int = 5) -> str:
-    """Return a concatenated text block for LLM context retrieval."""
+def get_context(prompt: str, top_k: int = 5):
+    """Return concatenated context and source metadata for LLM retrieval."""
     chunks = query(prompt, top_k=top_k)
-    lines = []
-    for c in chunks:
+    lines: List[str] = []
+    sources: List[Dict] = []
+    offset = 0
+    for idx, c in enumerate(chunks, start=1):
         if c.get("url"):
             prefix = f"(URL {c['url']})"
         else:
             prefix = f"(Doc {c['document_id']} page {c['page']})"
-        lines.append(f"{prefix} {c['text']}")
-    return "\n\n".join(lines)
+        line = f"[{idx}] {prefix} {c['text']}"
+        lines.append(line)
+        sources.append(
+            {
+                "id": str(idx),
+                "chunk_id": c["id"],
+                "document_id": c.get("document_id"),
+                "page": c.get("page"),
+                "url": c.get("url"),
+                "text": c["text"],
+                "offset_start": offset,
+                "offset_end": offset + len(line),
+            }
+        )
+        offset += len(line) + 2  # account for join newline spacing
+
+    context = "\n\n".join(lines)
+    return context, sources
