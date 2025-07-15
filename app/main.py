@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import List, Optional
 import shutil
 import uuid
 import openai
+import pandas as pd
 import json
 import os
 import re
@@ -13,6 +14,17 @@ from .db import init_db, add_document, add_chunks
 from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
+from .reporting import (
+    generate_summary,
+    generate_table,
+    generate_slide_deck,
+    markdown_to_pdf,
+    html_to_pdf,
+    dataframe_to_excel,
+    slide_deck_to_pptx,
+    Table as TableSchema,
+    SlideDeck,
+)
 
 app = FastAPI()
 
@@ -236,3 +248,55 @@ async def upload_file(file: UploadFile = File(...)):
     vector_db.add_embeddings(document_id, parsed_chunks)
 
     return {"document_id": document_id, "chunks": len(parsed_chunks)}
+
+
+@app.post("/summarize")
+async def summarize(prompt: str):
+    """Return a structured summary for the prompt."""
+    summary = generate_summary(prompt)
+    return summary.dict()
+
+
+@app.post("/generate_table")
+async def table(prompt: str):
+    """Generate a table structure from the LLM."""
+    table = generate_table(prompt)
+    return table.dict()
+
+
+@app.post("/generate_slides")
+async def slides(prompt: str):
+    """Generate a slide deck structure from the LLM."""
+    deck = generate_slide_deck(prompt)
+    return deck.dict()
+
+
+@app.post("/export/pdf")
+def export_pdf(content: str, markdown: bool = True):
+    """Convert provided content to PDF and return the file."""
+    os.makedirs("uploads", exist_ok=True)
+    out_path = os.path.join("uploads", f"{uuid.uuid4()}.pdf")
+    if markdown:
+        markdown_to_pdf(content, out_path)
+    else:
+        html_to_pdf(content, out_path)
+    return FileResponse(out_path, media_type="application/pdf", filename="output.pdf")
+
+
+@app.post("/export/excel")
+def export_excel(table: TableSchema):
+    """Export a table schema to an Excel file."""
+    os.makedirs("uploads", exist_ok=True)
+    out_path = os.path.join("uploads", f"{uuid.uuid4()}.xlsx")
+    df = pd.DataFrame(table.rows, columns=table.columns)
+    dataframe_to_excel(df, out_path)
+    return FileResponse(out_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="output.xlsx")
+
+
+@app.post("/export/pptx")
+def export_pptx(deck: SlideDeck):
+    """Export slide deck JSON to a PPTX file."""
+    os.makedirs("uploads", exist_ok=True)
+    out_path = os.path.join("uploads", f"{uuid.uuid4()}.pptx")
+    slide_deck_to_pptx(deck, out_path)
+    return FileResponse(out_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
