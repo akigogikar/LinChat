@@ -239,3 +239,24 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Docker Deployment
+
+### Docker Compose
+
+Build and run all services locally:
+
+```bash
+docker-compose up --build
+```
+
+The backend will be available on <http://localhost:8000>, the analysis service on <http://localhost:8001>, and the frontend on <http://localhost:3000>.
+
+### Kubernetes
+
+Example manifests are provided in the `k8s` directory. After building and pushing the container images, deploy with:
+
+```bash
+kubectl apply -f k8s
+```
+

@@ -1,0 +1,97 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linchat-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linchat-backend
+  template:
+    metadata:
+      labels:
+        app: linchat-backend
+    spec:
+      containers:
+      - name: backend
+        image: linchat-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ADMIN_PASSWORD
+          value: changeme
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: linchat-backend
+spec:
+  selector:
+    app: linchat-backend
+  ports:
+  - port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linchat-analysis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linchat-analysis
+  template:
+    metadata:
+      labels:
+        app: linchat-analysis
+    spec:
+      containers:
+      - name: analysis
+        image: linchat-analysis:latest
+        ports:
+        - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: linchat-analysis
+spec:
+  selector:
+    app: linchat-analysis
+  ports:
+  - port: 8001
+    targetPort: 8001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linchat-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linchat-frontend
+  template:
+    metadata:
+      labels:
+        app: linchat-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: linchat-frontend:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: linchat-frontend
+spec:
+  selector:
+    app: linchat-frontend
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
