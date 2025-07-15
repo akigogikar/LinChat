@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from typing import List
+from typing import List, Optional
 import shutil
 import uuid
 import openai
@@ -41,13 +41,16 @@ def _read_config():
     env_key = os.getenv("OPENROUTER_API_KEY")
     if env_key:
         conf.setdefault("openrouter_api_key", env_key)
+    env_model = os.getenv("OPENROUTER_MODEL")
+    if env_model:
+        conf.setdefault("openrouter_model", env_model)
     return conf
 
 
 def _write_config(conf: dict) -> None:
     """Persist configuration to disk."""
     with open(CONFIG_FILE, "w") as f:
-        json.dump(conf, f)
+        json.dump(conf, f, indent=2)
 
 
 def _get_api_key() -> str:
@@ -56,6 +59,11 @@ def _get_api_key() -> str:
     if not key:
         raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
     return key
+
+
+def _get_model() -> str:
+    conf = _read_config()
+    return conf.get("openrouter_model", "openai/gpt-3.5-turbo")
 
 
 def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -70,14 +78,42 @@ def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
 
 
 @app.post("/query")
-async def query_llm(prompt: str):
-    """Query OpenRouter LLM with the given prompt."""
+async def query_llm(
+    prompt: str,
+    url: Optional[str] = None,
+    search: Optional[str] = None,
+    top_k: int = 5,
+):
+    """Query OpenRouter LLM with context retrieval and optional web scraping."""
     openai.api_key = _get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
+
+    context = vector_db.get_context(prompt, top_k=top_k)
+
+    scraped_text = ""
+    if search and not url:
+        urls = await scrape_search(search, max_results=1)
+        if not urls:
+            raise HTTPException(status_code=404, detail="No search results")
+        url = urls[0]
+    if url:
+        scraped_text = await scrape_url(url) or ""
+
+    messages = [
+        {
+            "role": "system",
+            "content": "Use the provided context and scraped text to answer the user question. Cite sources when relevant.",
+        },
+        {
+            "role": "user",
+            "content": f"Question: {prompt}\n\nContext:\n{context}\n\nScraped:\n{scraped_text}",
+        },
+    ]
+
     try:
         completion = openai.ChatCompletion.create(
-            model="openai/gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
+            model=_get_model(),
+            messages=messages,
         )
         return {"response": completion.choices[0].message["content"]}
     except Exception as exc:
@@ -111,12 +147,15 @@ async def scrape_endpoint(url: str = None, query: str = None):
 def admin_page(auth: bool = Depends(_require_admin)):
     conf = _read_config()
     key = conf.get("openrouter_api_key", "")
+    model = conf.get("openrouter_model", _get_model())
     return HTMLResponse(
         f"""<html><body>
         <h1>Admin Config</h1>
         <form action='/admin/set_key' method='post'>
             <label>OpenRouter API Key:</label><br/>
             <input type='text' name='key' value='{key}'/><br/>
+            <label>Model:</label><br/>
+            <input type='text' name='model' value='{model}'/><br/>
             <input type='submit' value='Save'/>
         </form>
         </body></html>"""
@@ -124,9 +163,15 @@ def admin_page(auth: bool = Depends(_require_admin)):
 
 
 @app.post("/admin/set_key")
-def set_key(key: str = Form(...), auth: bool = Depends(_require_admin)):
+def set_key(
+    key: str = Form(...),
+    model: str = Form(None),
+    auth: bool = Depends(_require_admin),
+):
     conf = _read_config()
     conf["openrouter_api_key"] = key
+    if model:
+        conf["openrouter_model"] = model
     _write_config(conf)
     return {"status": "saved"}
 

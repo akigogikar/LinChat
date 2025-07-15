@@ -190,3 +190,4 @@ uvicorn app.main:app --reload
 ```
 
 The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
+You can also set the model used for completions by editing the `openrouter_model` value in `app/config.json` or via the admin page.
