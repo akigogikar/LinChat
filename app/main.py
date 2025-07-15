@@ -59,6 +59,12 @@ app.include_router(
 CITATION_STORE: dict = {}
 
 
+def _log_action(user_id: int, action: str) -> None:
+    """Record an audit log entry and write to the logger."""
+    logger.info("user %s %s", user_id, action)
+    add_audit_log(user_id, action)
+
+
 def _insert_links(text: str, req_id: str) -> str:
     """Replace [id] citations with clickable links."""
     def repl(match: re.Match) -> str:
@@ -71,6 +77,7 @@ def _insert_links(text: str, req_id: str) -> str:
 @app.on_event("startup")
 def _startup():
     """Initialize the database on startup."""
+    logger.info("Starting LinChat in %s environment", ENV)
     init_db()
     vector_db._get_client()
     import asyncio
@@ -81,14 +88,18 @@ def _startup():
     asyncio.get_event_loop().run_until_complete(create_tables())
 security = HTTPBasic()
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+CONFIG_DIR = os.path.dirname(__file__)
+ENV = os.getenv("LINCHAT_ENV", "development")
+CONFIG_FILE = os.path.join(CONFIG_DIR, f"config.{ENV}.json")
+DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 
 def _read_config():
     """Load configuration from file and environment variables."""
     conf = {}
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as f:
+    config_path = CONFIG_FILE if os.path.exists(CONFIG_FILE) else DEFAULT_CONFIG_FILE
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
             conf.update(json.load(f))
     env_user = os.getenv("ADMIN_USERNAME")
     if env_user:
@@ -141,6 +152,7 @@ async def query_llm(
     url: Optional[str] = None,
     search: Optional[str] = None,
     top_k: int = 5,
+    user=Depends(current_active_user),
 ):
     """Query OpenRouter LLM with context retrieval and optional web scraping."""
     openai.api_key = _get_api_key()
@@ -183,24 +195,27 @@ async def query_llm(
         )
         raw = completion.choices[0].message["content"]
         response_text = _insert_links(raw, request_id)
+        _log_action(user.id, "query_llm")
         return {"response": response_text, "request_id": request_id}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/search")
-async def search_docs(query: str, top_k: int = 5):
+async def search_docs(query: str, top_k: int = 5, user=Depends(current_active_user)):
     """Retrieve relevant document chunks from the vector DB."""
     results = vector_db.query(query, top_k=top_k)
+    _log_action(user.id, "search")
     return {"results": results}
 
 
 @app.get("/source/{req_id}/{cid}")
-def get_source(req_id: str, cid: str):
+def get_source(req_id: str, cid: str, user=Depends(current_active_user)):
     """Return the stored source excerpt for a citation ID."""
     info = CITATION_STORE.get(req_id, {}).get(cid)
     if not info:
         raise HTTPException(status_code=404, detail="Citation not found")
+    _log_action(user.id, f"get_source:{cid}")
     return {
         "id": cid,
         "text": info.get("text"),
@@ -304,39 +319,45 @@ async def upload_file(
 
 
 @app.post("/summarize")
-async def summarize(prompt: str):
+async def summarize(prompt: str, user=Depends(current_active_user)):
     """Return a structured summary for the prompt."""
     summary = generate_summary(prompt)
+    _log_action(user.id, "summarize")
     return summary.dict()
 
 
 @app.post("/generate_table")
-async def table(prompt: str):
+async def table(prompt: str, user=Depends(current_active_user)):
     """Generate a table structure from the LLM."""
     table = generate_table(prompt)
+    _log_action(user.id, "generate_table")
     return table.dict()
 
 
 @app.post("/generate_slides")
-async def slides(prompt: str):
+async def slides(prompt: str, user=Depends(current_active_user)):
     """Generate a slide deck structure from the LLM."""
     deck = generate_slide_deck(prompt)
+    _log_action(user.id, "generate_slides")
     return deck.dict()
 
 
 @app.post("/custom_analysis")
-async def custom_analysis(prompt: str, file: UploadFile = File(...)):
+async def custom_analysis(
+    prompt: str, file: UploadFile = File(...), user=Depends(current_active_user)
+):
     """Generate Rust code via the LLM for custom analysis and return results."""
     os.makedirs("uploads", exist_ok=True)
     path = os.path.join("uploads", f"{uuid.uuid4()}_{file.filename}")
     with open(path, "wb") as f:
         shutil.copyfileobj(file.file, f)
     result = run_custom_analysis(path, prompt)
+    _log_action(user.id, "custom_analysis")
     return result
 
 
 @app.post("/export/pdf")
-def export_pdf(content: str, markdown: bool = True):
+def export_pdf(content: str, markdown: bool = True, user=Depends(current_active_user)):
     """Convert provided content to PDF and return the file."""
     os.makedirs("uploads", exist_ok=True)
     out_path = os.path.join("uploads", f"{uuid.uuid4()}.pdf")
@@ -344,23 +365,26 @@ def export_pdf(content: str, markdown: bool = True):
         markdown_to_pdf(content, out_path)
     else:
         html_to_pdf(content, out_path)
+    _log_action(user.id, "export_pdf")
     return FileResponse(out_path, media_type="application/pdf", filename="output.pdf")
 
 
 @app.post("/export/excel")
-def export_excel(table: TableSchema):
+def export_excel(table: TableSchema, user=Depends(current_active_user)):
     """Export a table schema to an Excel file."""
     os.makedirs("uploads", exist_ok=True)
     out_path = os.path.join("uploads", f"{uuid.uuid4()}.xlsx")
     df = pd.DataFrame(table.rows, columns=table.columns)
     dataframe_to_excel(df, out_path)
+    _log_action(user.id, "export_excel")
     return FileResponse(out_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename="output.xlsx")
 
 
 @app.post("/export/pptx")
-def export_pptx(deck: SlideDeck):
+def export_pptx(deck: SlideDeck, user=Depends(current_active_user)):
     """Export slide deck JSON to a PPTX file."""
     os.makedirs("uploads", exist_ok=True)
     out_path = os.path.join("uploads", f"{uuid.uuid4()}.pptx")
     slide_deck_to_pptx(deck, out_path)
+    _log_action(user.id, "export_pptx")
     return FileResponse(out_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
