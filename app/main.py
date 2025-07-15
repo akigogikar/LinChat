@@ -14,6 +14,7 @@ from .db import init_db, add_document, add_chunks
 from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
+from .analysis_agent import run_custom_analysis
 from .reporting import (
     generate_summary,
     generate_table,
@@ -269,6 +270,17 @@ async def slides(prompt: str):
     """Generate a slide deck structure from the LLM."""
     deck = generate_slide_deck(prompt)
     return deck.dict()
+
+
+@app.post("/custom_analysis")
+async def custom_analysis(prompt: str, file: UploadFile = File(...)):
+    """Generate Rust code via the LLM for custom analysis and return results."""
+    os.makedirs("uploads", exist_ok=True)
+    path = os.path.join("uploads", f"{uuid.uuid4()}_{file.filename}")
+    with open(path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    result = run_custom_analysis(path, prompt)
+    return result
 
 
 @app.post("/export/pdf")
