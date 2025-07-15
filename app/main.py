@@ -1,11 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException, Form
+from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from typing import List
+import shutil
+import uuid
 import openai
 import json
 import os
 
+from .db import init_db, add_document, add_chunks
+from .ingest import parse_file
+
 app = FastAPI()
+
+
+@app.on_event("startup")
+def _startup():
+    """Initialize the database on startup."""
+    init_db()
 security = HTTPBasic()
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
@@ -91,3 +103,24 @@ def set_key(key: str = Form(...), auth: bool = Depends(_require_admin)):
     conf["openrouter_api_key"] = key
     _write_config(conf)
     return {"status": "saved"}
+
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Accept a file upload, store it, parse and persist chunks."""
+    os.makedirs("uploads", exist_ok=True)
+    ext = os.path.splitext(file.filename)[1]
+    doc_uuid = str(uuid.uuid4())
+    stored_name = f"{doc_uuid}{ext}"
+    save_path = os.path.join("uploads", stored_name)
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Parse file into chunks
+    parsed_chunks: List[dict] = parse_file(save_path)
+
+    # Persist to database
+    document_id = add_document(stored_name)
+    add_chunks(document_id, [(c.get("page"), c.get("text")) for c in parsed_chunks])
+
+    return {"document_id": document_id, "chunks": len(parsed_chunks)}
