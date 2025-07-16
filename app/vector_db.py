@@ -76,29 +76,36 @@ def add_web_embeddings(url: str, text: str) -> None:
     )
 
 
-def query(text: str, top_k: int = 5) -> List[Dict]:
+def query(text: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None) -> List[Dict]:
     """Return the most relevant chunks for the given text query."""
     collection = _get_collection()
     model = _get_model()
     query_emb = model.encode([text]).tolist()
-    results = collection.query(query_embeddings=query_emb, n_results=top_k)
+
+    fetch_k = max(top_k * 5, top_k)
+    results = collection.query(query_embeddings=query_emb, n_results=fetch_k)
     out: List[Dict] = []
     for chunk_id, doc, meta in zip(
         results["ids"][0], results["documents"][0], results["metadatas"][0]
     ):
+        doc_id = meta.get("document_id")
+        if doc_id is not None and allowed_ids is not None and doc_id not in allowed_ids:
+            continue
         out.append({
             "id": chunk_id,
             "text": doc,
-            "document_id": meta.get("document_id"),
+            "document_id": doc_id,
             "page": meta.get("page"),
             "url": meta.get("url"),
         })
+        if len(out) >= top_k:
+            break
     return out
 
 
-def get_context(prompt: str, top_k: int = 5):
+def get_context(prompt: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None):
     """Return concatenated context and source metadata for LLM retrieval."""
-    chunks = query(prompt, top_k=top_k)
+    chunks = query(prompt, top_k=top_k, allowed_ids=allowed_ids)
     lines: List[str] = []
     sources: List[Dict] = []
     offset = 0
