@@ -260,6 +260,34 @@ Example manifests are provided in the `k8s` directory. After building and pushin
 kubectl apply -f k8s
 ```
 
+### GitHub Codespaces
+
+LinChat includes a development container configuration under `.devcontainer` so
+the whole stack can run inside a Codespace. Choose **Code → Codespaces → Create
+codespace on main** and wait for the container to build. The devcontainer
+installs backend and frontend dependencies and exposes ports `3000`, `8000` and
+`8001` automatically. Once the codespace is ready, run:
+
+```bash
+docker-compose up --build
+```
+
+Open the forwarded port `3000` to access the UI.
+
+### Deploying to AWS
+
+For a lightweight AWS deployment you can use an EC2 instance with Docker
+installed. Clone this repository on the server, optionally set the
+`ADMIN_PASSWORD` environment variable, and run:
+
+```bash
+docker-compose up -d --build
+```
+
+Visit `http://<EC2-IP>:3000` in your browser. For production clusters you can
+also push the container images to a registry and apply the manifests in `k8s/`
+on an EKS cluster.
+
 ## API Documentation
 
 LinChat's FastAPI backend exposes an OpenAPI schema and interactive Swagger UI.
