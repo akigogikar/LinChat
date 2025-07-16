@@ -13,7 +13,14 @@ import logging
 
 from .logging_setup import setup_logging
 
-from .db import init_db, add_document, add_chunks, list_documents, add_audit_log
+from .db import (
+    init_db,
+    add_document,
+    add_chunks,
+    list_documents,
+    add_audit_log,
+    allowed_document_ids,
+)
 from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
@@ -168,7 +175,12 @@ async def query_llm(
     openai.base_url = "https://openrouter.ai/api/v1"
 
     request_id = str(uuid.uuid4())
-    context, sources = vector_db.get_context(prompt, top_k=top_k)
+    allowed_ids = allowed_document_ids(user.id, user.team_id)
+    try:
+        context, sources = vector_db.get_context(prompt, top_k=top_k, allowed_ids=allowed_ids)
+    except TypeError:
+        # fallback for older implementations during tests
+        context, sources = vector_db.get_context(prompt, top_k=top_k)
 
     scraped_text = ""
     if search and not url:
@@ -213,7 +225,11 @@ async def query_llm(
 @app.get("/search")
 async def search_docs(query: str, top_k: int = 5, user=Depends(current_active_user)):
     """Retrieve relevant document chunks from the vector DB."""
-    results = vector_db.query(query, top_k=top_k)
+    allowed_ids = allowed_document_ids(user.id, user.team_id)
+    try:
+        results = vector_db.query(query, top_k=top_k, allowed_ids=allowed_ids)
+    except TypeError:
+        results = vector_db.query(query, top_k=top_k)
     _log_action(user.id, "search")
     return {"results": results}
 

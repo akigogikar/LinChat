@@ -93,3 +93,20 @@ def list_documents(user_id: int, team_id: Optional[int]) -> List[Tuple[int, str]
     rows = cur.fetchall()
     conn.close()
     return rows
+
+
+def allowed_document_ids(user_id: int, team_id: Optional[int]) -> List[int]:
+    """Return document IDs accessible to the given user."""
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT id FROM documents WHERE owner_id=? OR (team_id=? AND is_shared=1)",
+            (user_id, team_id),
+        )
+        rows = [r[0] for r in cur.fetchall()]
+    except sqlite3.OperationalError:
+        rows = []
+    finally:
+        conn.close()
+    return rows
