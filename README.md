@@ -1,190 +1,27 @@
 # LinChat
-🌟 Vision: The Best Deep Research Product
 
-Your goal:
+LinChat is an AI-driven research assistant that brings together your private documents and live web data to deliver structured, citation-backed insights. The platform is built for small teams that need fast, collaborative analysis without compromising privacy.
 
-→ Build the best AI-powered deep research co-pilot that:
+## Features
 
-✅ Handles complex research questions
-✅ Combines:
+- **Multi-source synthesis** combining uploaded files with information scraped from the web
+- **Live web browsing** for up-to-date results
+- **Traceable citations** linking each claim to document snippets or URLs
+- **Structured outputs** including reports, slide decks, tables and charts
+- **Excel and data analysis** powered by a Rust microservice using Polars
+- **Team collaboration** with document sharing and access controls
+- **Privacy-first design** suitable for self-hosting or private cloud deployments
 
-Private documents (PDFs, Word, Excel, PPT, etc.)
-Live web data (via browsing & scraping)
-✅ Synthesizes insights into:
+## Technical Overview
 
-Structured reports
-Slide decks
-Tables
-Charts
-PDF exports
-Excel files
-✅ Provides traceable citations for every claim
-
-✅ Works for teams (~5 users) with:
-
-Collaboration
-Document sharing
-Access control
-✅ Ensures data privacy & security
-
-✅ Analysis is a backend process.
-
-Users care only about results
-Not the code or tech used
-→ A true virtual research analyst for professionals.
-
-🏆 Market Opportunity
-
-Gap in the market:
-
-Consumer chatbots → shallow, lack citations
-Enterprise tools (e.g. AlphaSense) → expensive, inaccessible to SMBs
-No solution today that:
-Synthesizes multi-source insights
-Handles private + public data seamlessly
-Produces structured, export-ready deliverables
-Is affordable and private
-→ Huge mid-market opportunity:
-
-Consultants
-Analysts
-NGOs
-Strategy teams
-Knowledge workers
-Potential TAM → hundreds of millions globally.
-
-💡 Key Product Differentiators
-
-✅ 1. Multi-Source Synthesis
-Fuses insights from:
-Private documents
-Web searches
-Proprietary data
-No other tool bridges both worlds this deeply.
-✅ 2. Live Web Browsing
-Scrapes web in real time
-Extracts text, tables
-Updates research with fresh info
-→ Beyond static knowledge bases like ChatGPT.
-
-✅ 3. Citations & Traceability
-Every claim linked to:
-Document snippets
-URLs
-Uses advanced techniques like:
-ContextCite
-Chunk-level tagging
-Users can click to verify sources.
-✅ 4. Structured Outputs
-Not just chat replies.
-Generates:
-Executive summaries
-Bullet lists
-Tables
-Charts
-Slide decks
-All exportable:
-PDF
-Excel
-PowerPoint
-✅ 5. Excel & Data Analysis
-Upload Excel → parse into structured data
-Run analysis:
-CAGR
-Summaries
-Charts
-Merges across sheets
-Export:
-New Excel files
-Charts as images
-All seamless → user never has to see code.
-✅ 6. Backend Analysis Engine
-Users want speed and results → not code.
-Analysis implemented as:
-Rust services (e.g. Polars for DataFrames)
-High-speed charting
-Result:
-Blazing fast analysis
-Low resource costs
-Optionally expose code downloads for enterprise clients → but hidden for regular users.
-✅ 7. Collaboration for Teams
-Team-based permissions:
-Private vs shared docs
-Versioning
-Shared research threads
-Centralized knowledge hub
-Audit trails for data security
-✅ 8. Privacy-First Design
-Self-hostable or private cloud
-No user data leaks to public APIs
-Encryption at rest & in transit
-When self-hosting you should enable disk encryption or use an encrypted
-database such as SQLCipher to protect data at rest. Always serve the API over
-HTTPS in production.
-Full compliance (SOC2, GDPR, etc.)
-→ A trusted research assistant.
-
-🛠 Technical Blueprint
-
-LLM Layer
-Large-context models:
-LLaMA-3-70B
-Mistral-XXB
-Open-source → avoid vendor lock-in
-RAG pipeline:
-Document retrieval
-Chunking
-Context injection
-Web Browsing
-Live scraping:
-Playwright
-Selenium
-Scraped pages converted to:
-Clean text
-Embedded tables
-Indexed in vector DB alongside private docs.
-Vector Database
-ChromaDB or Qdrant
-Holds:
-Document embeddings
-Web page chunks
-Enables semantic search.
-Analysis Engine
-Backend microservice:
-Rust + Polars:
-~10-30x faster than pandas
-Low latency
-Computes:
-Aggregations
-Charts
-Statistical analyses
-Returns:
-Images (charts)
-Tables
-Summaries
-Structured Output & Export
-LLM generates:
-JSON schemas for reports
-Slide structures
-Backend converts:
-Markdown/HTML → PDF (WeasyPrint)
-DataFrames → Excel
-Slide JSON → PowerPoint
-Frontend UI
-Upload docs
-Ask complex research questions
-View:
-Summaries
-Charts
-Data tables
-Export:
-PDF
-Excel
-PPT
+- **LLM layer** using large-context open-source models such as LLaMA 3 and Mistral
+- **Retrieval-Augmented Generation** with document chunking and semantic search via ChromaDB or Qdrant
+- **Rust analysis engine** providing high-performance computations and chart generation
+- **Frontend** built with React for uploading documents, asking questions and exporting results
 
 ## Getting Started
 
-This repository contains the initial code for a FastAPI service that integrates with [OpenRouter](https://openrouter.ai/) for language model access. To run the development server:
+The repository includes a FastAPI service that integrates with [OpenRouter](https://openrouter.ai/) for language model access.
 
 ```bash
 pip install -r requirements.txt
@@ -194,12 +31,7 @@ uvicorn app.main:app --reload
 
 ### Rust Analysis Service
 
-In addition to the FastAPI backend, a standalone Rust microservice provides
-fast data analysis using the Polars library. It exposes an `/analysis` endpoint
-that accepts an Excel file upload and returns column statistics. A line chart of
-the first numeric column is encoded as base64 in the `Chart` response header.
-
-To build and run it:
+A standalone Rust service under `analysis_service/` offers fast data analysis. Build and run it with:
 
 ```bash
 cd analysis_service
@@ -207,32 +39,19 @@ cargo build --release
 ./target/release/analysis_service
 ```
 
-The admin interface is protected via HTTP basic auth. The default username is `admin` and the password is read from the `admin_password` field in `app/config.json` or the `ADMIN_PASSWORD` environment variable when first run. Navigate to `/admin` to update the OpenRouter API key used for LLM queries.
-You can also set the model used for completions by editing the `openrouter_model` value in `app/config.json` or via the admin page.
+Authentication for the admin interface uses HTTP basic auth. Update the OpenRouter API key or model via the `/admin` page.
 
 ### Environment Configuration
 
-LinChat reads configuration from environment variables so it can run in different
-deployments. Set `LINCHAT_ENV` to `development` or `production` to load
-`app/config.<env>.json` if present. Database and vector store locations can be
-overridden with `LINCHAT_DB_FILE` and `LINCHAT_VECTOR_DIR`. Logging is
-configured via `LOG_LEVEL` and `LOG_FILE` which write structured logs that also
-populate the audit trail tables. For HTTPS deployments pass `--ssl-keyfile` and
-`--ssl-certfile` to `uvicorn` or use a reverse proxy with TLS termination.
+Set `LINCHAT_ENV` to `development` or `production` to load the appropriate config. Database and vector store locations are controlled by `LINCHAT_DB_FILE` and `LINCHAT_VECTOR_DIR`. Logging is configured via `LOG_LEVEL` and `LOG_FILE`. For HTTPS deployments pass `--ssl-keyfile` and `--ssl-certfile` to `uvicorn` or use a reverse proxy.
 
 ### Authentication & Teams
 
-Users can register and log in using JWT cookies powered by **fastapi-users**. After authentication you can upload documents and choose to share them with your team. The `/documents` endpoint lists private files plus any that teammates shared with the workspace.
-
-Administrators can view registered users and recent audit logs in the `/admin` dashboard.
-
-The FastAPI backend exposes `/custom_analysis` which uploads an Excel file and asks the LLM to produce Rust code for just-in-time analysis using Polars. The generated program is compiled and executed on the server, and the JSON results are returned to the caller.
+Users register and log in with JWT cookies provided by **fastapi-users**. After authenticating you can upload documents and share them with your workspace. Administrators can manage users and view audit logs at `/admin`.
 
 ### Frontend SPA
 
-A simple React application lives in `frontend/` and communicates with the FastAPI
-endpoints. It supports uploading documents, asking questions, viewing cited
-sources, generating tables and charts, and exporting a PDF. To run it locally:
+The React frontend in `frontend/` communicates with the FastAPI endpoints. It supports document uploads, question answering with citations, table and chart generation and PDF export. To run locally:
 
 ```bash
 cd frontend
@@ -240,21 +59,21 @@ npm install
 npm run dev
 ```
 
-## Docker Deployment
+## Deployment
 
 ### Docker Compose
 
-Build and run all services locally:
+Build and start all services locally:
 
 ```bash
 docker-compose up --build
 ```
 
-The backend will be available on <http://localhost:8000>, the analysis service on <http://localhost:8001>, and the frontend on <http://localhost:3000>.
+The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:3000>.
 
 ### Kubernetes
 
-Example manifests are provided in the `k8s` directory. After building and pushing the container images, deploy with:
+Example manifests are provided in `k8s/`. After building and pushing the container images, deploy with:
 
 ```bash
 kubectl apply -f k8s
@@ -262,39 +81,27 @@ kubectl apply -f k8s
 
 ### GitHub Codespaces
 
-LinChat includes a development container configuration under `.devcontainer` so
-the whole stack can run inside a Codespace. Choose **Code → Codespaces → Create
-codespace on main** and wait for the container to build. The devcontainer
-installs backend and frontend dependencies and exposes ports `3000`, `8000` and
-`8001` automatically. Once the codespace is ready, run:
+A development container is available under `.devcontainer` so the full stack can run inside a Codespace. Once the container is ready, execute:
 
 ```bash
 docker-compose up --build
 ```
 
-Open the forwarded port `3000` to access the UI.
+Then open the forwarded port `3000` to access the UI.
 
 ### Deploying to AWS
 
-For a lightweight AWS deployment you can use an EC2 instance with Docker
-installed. Clone this repository on the server, optionally set the
-`ADMIN_PASSWORD` environment variable, and run:
+For a lightweight deployment use an EC2 instance with Docker installed. Clone the repository, optionally set `ADMIN_PASSWORD` and run:
 
 ```bash
 docker-compose up -d --build
 ```
 
-Visit `http://<EC2-IP>:3000` in your browser. For production clusters you can
-also push the container images to a registry and apply the manifests in `k8s/`
-on an EKS cluster.
+You can also push the images to a registry and apply the manifests in `k8s/` on an EKS cluster.
 
 ## API Documentation
 
-LinChat's FastAPI backend exposes an OpenAPI schema and interactive Swagger UI.
-Once the server is running, navigate to <http://localhost:8000/docs> to explore
-all available endpoints. The ReDoc view is available at
-<http://localhost:8000/redoc>. A copy of the generated schema is included in
-`docs/openapi.json` and can be regenerated with:
+The FastAPI backend exposes an OpenAPI schema and interactive Swagger UI at <http://localhost:8000/docs>. A copy of the schema is included in `docs/openapi.json` and can be regenerated with:
 
 ```bash
 python scripts/generate_openapi.py
@@ -302,34 +109,24 @@ python scripts/generate_openapi.py
 
 ## Tutorials & Examples
 
-Below are a few example workflows to help you get started with common research
-tasks.
-
 ### Summarize Documents
 
-1. Upload one or more files via `/upload` or the frontend.
-2. Call `/summarize` with a prompt like `"Summarize the key findings"` to receive
-   a structured summary with citations.
+1. Upload files via `/upload` or the frontend.
+2. Call `/summarize` with a prompt such as "Summarize the key findings" to receive a structured summary with citations.
 
 ### Generate Tables and Slides
 
-* Use `/generate_table` to request tabular data from the LLM, then `/export/excel`
-  to download the results as an Excel file.
-* Use `/generate_slides` to create a slide deck structure which can be exported
-  to PowerPoint via `/export/pptx`.
+- Use `/generate_table` to request tabular data and `/export/excel` to download the results.
+- Use `/generate_slides` to create a slide deck structure and export it via `/export/pptx`.
 
 ### Custom Data Analysis
 
-Upload an Excel file and send a prompt to `/custom_analysis`. LinChat will
-generate and execute Rust code using Polars to return the requested analytics
-along with a chart in the response headers.
+Upload an Excel file and send a prompt to `/custom_analysis`. LinChat will generate and execute Rust code using Polars to return the requested analytics along with a chart in the response headers.
 
-### Running Tests
+## Running Tests
 
-The project includes a pytest suite. After installing the requirements, run:
+After installing the requirements, run:
 
 ```bash
 pytest -q
 ```
-
-
