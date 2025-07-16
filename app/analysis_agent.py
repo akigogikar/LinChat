@@ -2,10 +2,10 @@ import os
 import shutil
 import subprocess
 import tempfile
-import uuid
 import json
 from .main import _get_api_key, _get_model
 import openai
+
 
 def generate_rust_code(prompt: str) -> str:
     """Use the LLM to generate Rust code for custom analysis."""
@@ -22,6 +22,7 @@ def generate_rust_code(prompt: str) -> str:
     ]
     completion = openai.ChatCompletion.create(model=_get_model(), messages=messages)
     return completion.choices[0].message["content"]
+
 
 def run_custom_analysis(file_path: str, prompt: str) -> dict:
     """Generate, compile, and run Rust analysis code."""

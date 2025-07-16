@@ -10,6 +10,7 @@ from weasyprint import HTML
 import markdown as md
 from pptx import Presentation
 from pptx.util import Inches
+import os
 
 
 class Summary(BaseModel):
@@ -33,7 +34,6 @@ class SlideDeck(BaseModel):
 
 
 # Configuration helpers redefined here to avoid circular imports
-import os
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
 

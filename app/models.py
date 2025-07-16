@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from fastapi_users.db import SQLAlchemyBaseUserTable
 
 from .database import Base
+
 
 class Team(Base):
     __tablename__ = "teams"
@@ -15,6 +16,7 @@ class Team(Base):
     members = relationship("User", back_populates="team")
     documents = relationship("Document", back_populates="team")
 
+
 class User(SQLAlchemyBaseUserTable[int], Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -22,6 +24,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
 
     team = relationship("Team", back_populates="members")
     documents = relationship("Document", back_populates="owner")
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -33,6 +36,7 @@ class Document(Base):
 
     owner = relationship("User", back_populates="documents")
     team = relationship("Team", back_populates="documents")
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
