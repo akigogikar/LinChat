@@ -14,3 +14,6 @@ markdown
 pandas
 weasyprint
 fastapi-users[sqlalchemy]
+
+aiosqlite
+pytest-asyncio
