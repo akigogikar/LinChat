@@ -9,6 +9,9 @@ import pandas as pd
 import json
 import os
 import re
+import logging
+
+from .logging_setup import setup_logging
 
 from .db import init_db, add_document, add_chunks, list_documents, add_audit_log
 from .ingest import parse_file
@@ -58,6 +61,9 @@ app.include_router(
 # In-memory store of citation metadata keyed by request ID
 CITATION_STORE: dict = {}
 
+setup_logging()
+logger = logging.getLogger(__name__)
+
 
 def _log_action(user_id: int, action: str) -> None:
     """Record an audit log entry and write to the logger."""
@@ -82,10 +88,13 @@ def _startup():
     vector_db._get_client()
     import asyncio
     from .database import engine, Base
+
     async def create_tables():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     asyncio.get_event_loop().run_until_complete(create_tables())
+
+
 security = HTTPBasic()
 
 CONFIG_DIR = os.path.dirname(__file__)
@@ -252,7 +261,7 @@ async def admin_page(auth: bool = Depends(_require_admin)):
         users = (await session.execute(select(User))).scalars().all()
         logs = (await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20))).scalars().all()
     user_rows = "".join(f"<li>{u.email}</li>" for u in users)
-    log_rows = "".join(f"<li>{l.timestamp}: {l.user_id} - {l.action}</li>" for l in logs)
+    log_rows = "".join(f"<li>{log.timestamp}: {log.user_id} - {log.action}</li>" for log in logs)
     return HTMLResponse(
         f"""<html><body>
         <h1>Admin Config</h1>

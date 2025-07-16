@@ -1,5 +1,5 @@
 import os
-from typing import Iterable, List, Dict, Optional
+from typing import Iterable, List, Dict
 
 from chromadb import PersistentClient
 from chromadb.config import Settings
@@ -15,6 +15,7 @@ _client = None
 _collection = None
 _model = None
 
+
 def _get_client() -> PersistentClient:
     """Return a persistent chroma client."""
     global _client
@@ -22,6 +23,7 @@ def _get_client() -> PersistentClient:
         os.makedirs(DB_DIR, exist_ok=True)
         _client = PersistentClient(path=DB_DIR, settings=Settings(anonymized_telemetry=False))
     return _client
+
 
 def _get_collection():
     """Return the collection used for document embeddings."""
@@ -31,12 +33,14 @@ def _get_collection():
         _collection = client.get_or_create_collection(COLLECTION_NAME)
     return _collection
 
+
 def _get_model() -> SentenceTransformer:
     """Load the sentence transformer model lazily."""
     global _model
     if _model is None:
         _model = SentenceTransformer("all-MiniLM-L6-v2")
     return _model
+
 
 def add_embeddings(document_id: int, chunks: Iterable[Dict]) -> None:
     """Embed and store document chunks in the vector database."""
@@ -57,6 +61,7 @@ def add_embeddings(document_id: int, chunks: Iterable[Dict]) -> None:
         return
     embeddings = model.encode(texts).tolist()
     collection.add(documents=texts, embeddings=embeddings, ids=ids, metadatas=metadata)
+
 
 def add_web_embeddings(url: str, text: str) -> None:
     """Embed and store web page text with URL metadata."""
@@ -89,6 +94,7 @@ def query(text: str, top_k: int = 5) -> List[Dict]:
             "url": meta.get("url"),
         })
     return out
+
 
 def get_context(prompt: str, top_k: int = 5):
     """Return concatenated context and source metadata for LLM retrieval."""
