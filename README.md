@@ -80,6 +80,8 @@ docker-compose up --build
 You can also build the images separately and then launch the stack:
 
 ```bash
+OPENROUTER_API_KEY=your-openrouter-key \
+OPENROUTER_MODEL=openrouter/openai/gpt-4o \
 docker-compose build
 docker-compose up
 ```
