@@ -11,6 +11,8 @@ import os
 import re
 import logging
 
+from .config_utils import _get_api_key, _get_model
+
 from .logging_setup import setup_logging
 
 from .db import (
@@ -24,7 +26,6 @@ from .db import (
 from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
-from .analysis_agent import run_custom_analysis
 from .reporting import (
     generate_summary,
     generate_table,
@@ -138,17 +139,6 @@ def _write_config(conf: dict) -> None:
         json.dump(conf, f, indent=2)
 
 
-def _get_api_key() -> str:
-    conf = _read_config()
-    key = conf.get("openrouter_api_key")
-    if not key:
-        raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
-    return key
-
-
-def _get_model() -> str:
-    conf = _read_config()
-    return conf.get("openrouter_model", "openai/gpt-3.5-turbo")
 
 
 def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -160,6 +150,9 @@ def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
     if credentials.username != username or credentials.password != password:
         raise HTTPException(status_code=401, detail="Unauthorized")
     return True
+
+
+from .analysis_agent import run_custom_analysis
 
 
 @app.post("/query")
