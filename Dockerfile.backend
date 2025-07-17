@@ -11,6 +11,8 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --prefix=/install -r requirements.txt
+# Make the installed packages available to Python
+ENV PYTHONPATH=/install/lib/python3.11/site-packages
 # Add the installation prefix to PATH so the Playwright CLI is available
 ENV PATH="/install/bin:$PATH"
 RUN playwright install --with-deps
