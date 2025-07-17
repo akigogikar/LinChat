@@ -22,6 +22,13 @@ pytest_cache/
 frontend/node_modules
 analysis_service/target
 
+# Build artifacts and virtual environments
+build/
+dist/
+*.egg-info
+venv/
+.env/
+
 # Miscellaneous directories not needed in Docker build
 scripts
 k8s
