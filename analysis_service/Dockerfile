@@ -1,4 +1,4 @@
-FROM rust:1.78 AS builder
+FROM rust:slim AS builder
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         pkg-config libfontconfig1-dev build-essential \
@@ -8,7 +8,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 RUN cargo build --release
 
-FROM debian:bullseye-slim
+FROM debian:slim
 WORKDIR /app
 COPY --from=builder /usr/src/app/target/release/analysis_service ./analysis_service
 EXPOSE 8001
