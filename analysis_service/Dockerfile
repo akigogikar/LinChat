@@ -1,4 +1,8 @@
 FROM rust:1.77 as builder
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        pkg-config libfontconfig1-dev build-essential \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
