@@ -1,11 +1,16 @@
 version: '3.9'
 services:
   backend:
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
+      args:
+        - OPENROUTER_API_KEY
+        - OPENROUTER_MODEL
     environment:
       - ADMIN_PASSWORD=changeme
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL}
     volumes:
       - ./uploads:/app/uploads
       - ./app/data.db:/app/app/data.db
