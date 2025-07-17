@@ -1,0 +1,30 @@
+# Ignore Git and GitHub data
+.git
+.github
+
+# Development and temporary directories
+.devcontainer
+.vscode
+
+# Documentation and tests
+docs
+tests
+
+# File uploads and caches
+uploads
+__pycache__/
+*.py[cod]
+*.swp
+.DS_Store
+pytest_cache/
+
+# Node and Rust build directories
+frontend/node_modules
+analysis_service/target
+
+# Miscellaneous directories not needed in Docker build
+scripts
+k8s
+
+# Exclude analysis_agent generated directories
+analysis_agent_*/
