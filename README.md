@@ -77,6 +77,15 @@ OPENROUTER_MODEL=openrouter/openai/gpt-4o \
 docker-compose up --build
 ```
 
+You can also build the images separately and then launch the stack:
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+Using `docker-compose up --build` triggers a rebuild every time. Running `docker-compose build` first is preferred when you only need to rebuild after changing a Dockerfile or dependencies. The build step expects `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL` to be set so they can be passed as build arguments.
+
 The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:3000>.
 
 ### Prebuilt Images
