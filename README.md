@@ -39,6 +39,8 @@ cargo build --release
 ./target/release/analysis_service
 ```
 
+The main backend image now also installs the Rust toolchain and `libfontconfig1-dev` so the `/custom_analysis` endpoint can compile generated code.
+
 Authentication for the admin interface uses HTTP basic auth. Update the OpenRouter API key or model via the `/admin` page.
 
 ### Environment Configuration
@@ -122,6 +124,7 @@ python scripts/generate_openapi.py
 ### Custom Data Analysis
 
 Upload an Excel file and send a prompt to `/custom_analysis`. LinChat will generate and execute Rust code using Polars to return the requested analytics along with a chart in the response headers.
+The Docker image installs Cargo so this compilation works out of the box.
 
 ## Running Tests
 
