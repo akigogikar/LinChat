@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import json
-from .main import _get_api_key, _get_model
+from .config_utils import _get_api_key, _get_model
 import openai
 
 
