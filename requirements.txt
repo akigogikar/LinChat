@@ -9,7 +9,7 @@ chromadb
 sentence-transformers
 playwright
 beautifulsoup4
-httpx
+httpx<0.28
 markdown
 pandas
 weasyprint
