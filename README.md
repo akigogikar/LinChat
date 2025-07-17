@@ -1,4 +1,4 @@
-# LinChat
+# LinChat Service
 
 LinChat is an AI-driven research assistant that brings together your private documents and live web data to deliver structured, citation-backed insights. The platform is built for small teams that need fast, collaborative analysis without compromising privacy.
 
