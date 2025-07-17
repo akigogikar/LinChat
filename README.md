@@ -73,6 +73,23 @@ docker-compose up --build
 
 The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:3000>.
 
+### Prebuilt Images
+
+Prebuilt containers are available on GHCR so you don't have to build them yourself.
+
+```bash
+docker pull ghcr.io/<owner>/linchat-backend:<tag>
+docker pull ghcr.io/<owner>/linchat-analysis:<tag>
+docker pull ghcr.io/<owner>/linchat-frontend:<tag>
+
+docker network create linchat
+docker run -d --name analysis --network linchat -p 8001:8001 ghcr.io/<owner>/linchat-analysis:<tag>
+docker run -d --name backend --network linchat -p 8000:8000 ghcr.io/<owner>/linchat-backend:<tag>
+docker run -d --name frontend --network linchat -p 3000:80 ghcr.io/<owner>/linchat-frontend:<tag>
+```
+
+Replace `<owner>` with your registry namespace and `<tag>` with the desired version.
+
 ### Kubernetes
 
 Example manifests are provided in `k8s/`. After building and pushing the container images, deploy with:
