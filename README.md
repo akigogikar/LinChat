@@ -90,6 +90,11 @@ Using `docker-compose up --build` triggers a rebuild every time. Running `docker
 
 The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:3000>.
 
+If `docker-compose` fails to start because port `8000` is already in use, another
+process or container is listening on that port. Stop the conflicting container
+with `docker ps`/`docker stop` or change the host port mapping in
+`docker-compose.yml`, for example `- "8080:8000"`.
+
 ### Prebuilt Images
 
 Prebuilt containers are available on GHCR so you don't have to build them yourself.
