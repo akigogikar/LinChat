@@ -6,6 +6,7 @@ RUN apt-get update \
 WORKDIR /usr/src/app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
+RUN apt-get update && apt-get install -y libfontconfig1
 RUN cargo build --release
 
 # The "slim" tag was removed from Docker Hub. Use the official
