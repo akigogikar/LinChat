@@ -21,11 +21,14 @@ LinChat is an AI-driven research assistant that brings together your private doc
 
 ## Getting Started
 
-The repository includes a FastAPI service that integrates with [OpenRouter](https://openrouter.ai/) for language model access.
+The repository includes a FastAPI service that integrates with [OpenRouter](https://openrouter.ai/) for language model access. Provide your OpenRouter credentials via environment variables before starting the server.
 
 ```bash
 pip install -r requirements.txt
 export ADMIN_PASSWORD="your-password"
+export OPENROUTER_API_KEY="your-openrouter-key"
+# Optional: specify a model like "openrouter/openai/gpt-4o"
+export OPENROUTER_MODEL="openrouter/openai/gpt-4o"
 uvicorn app.main:app --reload
 ```
 
@@ -65,9 +68,12 @@ npm run dev
 
 ### Docker Compose
 
-Build and start all services locally:
+Build and start all services locally. Provide your OpenRouter API key and option
+al model in the environment:
 
 ```bash
+OPENROUTER_API_KEY=your-openrouter-key \
+OPENROUTER_MODEL=openrouter/openai/gpt-4o \
 docker-compose up --build
 ```
 
