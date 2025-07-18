@@ -77,6 +77,10 @@ OPENROUTER_MODEL=openrouter/openai/gpt-4o \
 docker-compose up --build
 ```
 
+Create a `data` directory next to `docker-compose.yml` before starting the stack.
+The backend uses this folder to store the SQLite database at `data.db` which is
+mounted into the container.
+
 You can also build the images separately and then launch the stack:
 
 ```bash
