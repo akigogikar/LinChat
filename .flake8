@@ -1,15 +1,6 @@
 [flake8]
 max-line-length = 150
 exclude = \
-    bs4,\
-    docx,\
-    fastapi,\
-    fastapi_users,\
-    openai,\
-    openpyxl,\
-    pptx,\
-    pydantic,\
-    sqlalchemy,\
     tests,\
     pytest_asyncio.py,\
     scripts/generate_openapi.py,
