@@ -1,5 +1,7 @@
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export async function queryLLM(prompt) {
-  const res = await fetch('/query', {
+  const res = await fetch(`${API_BASE}/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })
@@ -12,13 +14,13 @@ export async function uploadFile(file, shared=false) {
   const form = new FormData();
   form.append('file', file);
   form.append('shared', shared);
-  const res = await fetch('/upload', { method: 'POST', body: form });
+  const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function generateTable(prompt) {
-  const res = await fetch('/generate_table', {
+  const res = await fetch(`${API_BASE}/generate_table`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })
@@ -38,13 +40,13 @@ export async function analyzeFile(file) {
 }
 
 export async function getCitation(reqId, cid) {
-  const res = await fetch(`/source/${reqId}/${cid}`);
+  const res = await fetch(`${API_BASE}/source/${reqId}/${cid}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function exportPdf(content) {
-  const res = await fetch('/export/pdf', {
+  const res = await fetch(`${API_BASE}/export/pdf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content })
@@ -55,7 +57,7 @@ export async function exportPdf(content) {
 }
 
 export async function loginUser(username, password) {
-  const res = await fetch('/auth/jwt/login', {
+  const res = await fetch(`${API_BASE}/auth/jwt/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
@@ -65,7 +67,7 @@ export async function loginUser(username, password) {
 }
 
 export async function registerUser(user) {
-  const res = await fetch('/auth/register', {
+  const res = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user)
@@ -76,26 +78,26 @@ export async function registerUser(user) {
 
 
 export async function getDocuments() {
-  const res = await fetch('/documents');
+  const res = await fetch(`${API_BASE}/documents`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function deleteDocument(id) {
-  const res = await fetch(`/documents/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/documents/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 
 export async function setShared(id, shared) {
-  const res = await fetch(`/documents/${id}/share?shared=${shared}`, { method: 'POST' });
+  const res = await fetch(`${API_BASE}/documents/${id}/share?shared=${shared}`, { method: 'POST' });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function getAdminData() {
-  const res = await fetch('/admin/data');
+  const res = await fetch(`${API_BASE}/admin/data`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -104,7 +106,7 @@ export async function setApiKey(key, model) {
   const form = new FormData();
   form.append('key', key);
   if (model) form.append('model', model);
-  const res = await fetch('/admin/set_key', { method: 'POST', body: form });
+  const res = await fetch(`${API_BASE}/admin/set_key`, { method: 'POST', body: form });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
