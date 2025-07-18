@@ -53,3 +53,18 @@ export async function exportPdf(content) {
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
+
+export async function getAdminData() {
+  const res = await fetch('/admin/data');
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function setApiKey(key, model) {
+  const form = new FormData();
+  form.append('key', key);
+  if (model) form.append('model', model);
+  const res = await fetch('/admin/set_key', { method: 'POST', body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
