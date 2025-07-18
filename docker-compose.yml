@@ -11,9 +11,10 @@ services:
       - ADMIN_PASSWORD=changeme
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL}
+      - LINCHAT_DB_FILE=/data/data.db
     volumes:
       - ./uploads:/app/uploads
-      - ./app/data.db:/app/app/data.db
+      - ./data:/data
     ports:
       - "8000:8000"
     depends_on:
