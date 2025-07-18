@@ -132,3 +132,9 @@ def get_context(prompt: str, top_k: int = 5, allowed_ids: Iterable[int] | None =
 
     context = "\n\n".join(lines)
     return context, sources
+
+
+def delete_document(document_id: int) -> None:
+    """Remove all embeddings for a document."""
+    collection = _get_collection()
+    collection.delete(where={"document_id": document_id})

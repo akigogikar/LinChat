@@ -21,6 +21,8 @@ from .db import (
     list_documents,
     add_audit_log,
     allowed_document_ids,
+    delete_document,
+    set_document_shared,
 )
 from .ingest import parse_file
 from . import vector_db
@@ -273,7 +275,32 @@ def set_key(
 @app.get("/documents")
 async def get_documents(user=Depends(current_active_user)):
     docs = list_documents(user.id, user.team_id)
-    return {"documents": [{"id": d[0], "filename": d[1]} for d in docs]}
+    return {
+        "documents": [
+            {"id": d[0], "filename": d[1], "is_shared": bool(d[2])} for d in docs
+        ]
+    }
+
+
+@app.delete("/documents/{doc_id}")
+async def remove_document(doc_id: int, user=Depends(current_active_user)):
+    allowed = allowed_document_ids(user.id, user.team_id)
+    if doc_id not in allowed:
+        raise HTTPException(status_code=404, detail="Document not found")
+    delete_document(doc_id)
+    vector_db.delete_document(doc_id)
+    _log_action(user.id, f"delete:{doc_id}")
+    return {"status": "deleted"}
+
+
+@app.post("/documents/{doc_id}/share")
+async def share_document(doc_id: int, shared: bool, user=Depends(current_active_user)):
+    allowed = allowed_document_ids(user.id, user.team_id)
+    if doc_id not in allowed:
+        raise HTTPException(status_code=404, detail="Document not found")
+    set_document_shared(doc_id, shared)
+    _log_action(user.id, f"share:{doc_id}:{shared}")
+    return {"id": doc_id, "is_shared": shared}
 
 
 @app.post("/upload")

@@ -82,11 +82,11 @@ def add_audit_log(user_id: int, action: str) -> None:
     conn.close()
 
 
-def list_documents(user_id: int, team_id: Optional[int]) -> List[Tuple[int, str]]:
+def list_documents(user_id: int, team_id: Optional[int]) -> List[Tuple[int, str, int]]:
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, filename FROM documents WHERE owner_id=?"
+        "SELECT id, filename, is_shared FROM documents WHERE owner_id=?"
         " OR (team_id=? AND is_shared=1)",
         (user_id, team_id),
     )
@@ -110,3 +110,22 @@ def allowed_document_ids(user_id: int, team_id: Optional[int]) -> List[int]:
     finally:
         conn.close()
     return rows
+
+
+def delete_document(doc_id: int) -> None:
+    """Remove a document and its chunks."""
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM chunks WHERE document_id=?", (doc_id,))
+    cur.execute("DELETE FROM documents WHERE id=?", (doc_id,))
+    conn.commit()
+    conn.close()
+
+
+def set_document_shared(doc_id: int, shared: bool) -> None:
+    """Update the shared flag for a document."""
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("UPDATE documents SET is_shared=? WHERE id=?", (int(shared), doc_id))
+    conn.commit()
+    conn.close()

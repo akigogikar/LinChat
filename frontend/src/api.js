@@ -55,18 +55,21 @@ export async function exportPdf(content) {
 }
 
 
-export async function getAdminData() {
-  const res = await fetch('/admin/data');
+export async function getDocuments() {
+  const res = await fetch('/documents');
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function deleteDocument(id) {
+  const res = await fetch(`/documents/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 
-export async function setApiKey(key, model) {
-  const form = new FormData();
-  form.append('key', key);
-  if (model) form.append('model', model);
-  const res = await fetch('/admin/set_key', { method: 'POST', body: form });
+export async function setShared(id, shared) {
+  const res = await fetch(`/documents/${id}/share?shared=${shared}`, { method: 'POST' });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
