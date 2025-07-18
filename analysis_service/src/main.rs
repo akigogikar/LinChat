@@ -31,9 +31,11 @@ async fn analyze(mut multipart: Multipart) -> Result<Response, StatusCode> {
     info!("received analysis request");
 
     let data = data.ok_or(StatusCode::BAD_REQUEST)?;
-    // Read Excel data using calamine and convert to Polars DataFrame
+    // Read Excel data using calamine. `open_workbook_auto_from_rs` is the helper
+    // for opening a workbook from an in-memory cursor.
     let cursor = std::io::Cursor::new(data);
-    let mut workbook = open_workbook_auto_from_rs(cursor).map_err(|_| StatusCode::BAD_REQUEST)?;
+    let mut workbook = open_workbook_auto_from_rs(cursor)
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
     let sheet_name = workbook.sheet_names().get(0).cloned().ok_or(StatusCode::BAD_REQUEST)?;
     let range = workbook.worksheet_range(&sheet_name).map_err(|_| StatusCode::BAD_REQUEST)?;
 
