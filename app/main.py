@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import List, Optional
 import shutil
@@ -225,33 +225,35 @@ async def scrape_endpoint(url: str = None, query: str = None):
         raise HTTPException(status_code=500, detail="Failed to scrape")
     return {"url": url, "length": len(content)}
 
-
-@app.get("/admin", response_class=HTMLResponse)
-async def admin_page(auth: bool = Depends(_require_admin)):
-    conf = config._read_config()
+@app.get("/admin/data")
+async def admin_data(auth: bool = Depends(_require_admin)):
+    conf = _read_config()
     key = conf.get("openrouter_api_key", "")
     model = conf.get("openrouter_model", config._get_model())
     async with async_session_maker() as session:
         users = (await session.execute(select(User))).scalars().all()
-        logs = (await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20))).scalars().all()
-    user_rows = "".join(f"<li>{u.email}</li>" for u in users)
-    log_rows = "".join(f"<li>{log.timestamp}: {log.user_id} - {log.action}</li>" for log in logs)
-    return HTMLResponse(
-        f"""<html><body>
-        <h1>Admin Config</h1>
-        <form action='/admin/set_key' method='post'>
-            <label>OpenRouter API Key:</label><br/>
-            <input type='text' name='key' value='{key}'/><br/>
-            <label>Model:</label><br/>
-            <input type='text' name='model' value='{model}'/><br/>
-            <input type='submit' value='Save'/>
-        </form>
-        <h2>Users</h2>
-        <ul>{user_rows}</ul>
-        <h2>Audit Logs</h2>
-        <ul>{log_rows}</ul>
-        </body></html>"""
-    )
+        logs = (
+            await session.execute(
+                select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20)
+            )
+        ).scalars().all()
+    return {
+        "key": key,
+        "model": model,
+        "users": [{"id": u.id, "email": u.email} for u in users],
+        "logs": [
+            {
+                "id": log.id,
+                "user_id": log.user_id,
+                "action": log.action,
+                "timestamp": log.timestamp.isoformat(),
+            }
+            for log in logs
+        ],
+    }
+
+
+
 
 
 @app.post("/admin/set_key")
