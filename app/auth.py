@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from fastapi import Request
+from fastapi import Request, Response, Depends
 from fastapi_users import FastAPIUsers, schemas
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -9,6 +9,7 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users.manager import BaseUserManager
 
 from .database import async_session_maker
 from .models import User
@@ -46,25 +47,37 @@ class UserUpdate(schemas.BaseUserUpdate):
     team_id: Optional[int] = None
 
 
+class UserManager(BaseUserManager[User, int]):
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
+
+    async def on_after_register(
+        self, user: User, request: Optional[Request] = None
+    ) -> None:
+        from .db import add_audit_log
+
+        add_audit_log(user.id, "register")
+
+    async def on_after_login(
+        self,
+        user: User,
+        request: Optional[Request] = None,
+        response: Optional[Response] = None,
+    ) -> None:
+        from .db import add_audit_log
+
+        add_audit_log(user.id, "login")
+
+
+async def get_user_manager(
+    user_db=Depends(get_user_db),
+) -> UserManager:
+    yield UserManager(user_db)
+
+
 fastapi_users = FastAPIUsers[User, int](
-    get_user_db,
+    get_user_manager,
     [auth_backend],
 )
 
 current_active_user = fastapi_users.current_user(active=True)
-
-
-async def on_after_register(user: User, request: Optional[Request] = None):
-    from .db import add_audit_log
-
-    add_audit_log(user.id, "register")
-
-
-async def on_after_login(user: User, request: Optional[Request] = None):
-    from .db import add_audit_log
-
-    add_audit_log(user.id, "login")
-
-
-fastapi_users.on_after_register(on_after_register)
-fastapi_users.on_after_login(on_after_login)
