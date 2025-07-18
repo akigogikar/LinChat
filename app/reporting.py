@@ -11,6 +11,7 @@ import markdown as md
 from pptx import Presentation
 from pptx.util import Inches
 import os
+from . import config
 
 from .config import _get_api_key, _get_model, _read_config
 
@@ -34,16 +35,13 @@ class Slide(BaseModel):
 class SlideDeck(BaseModel):
     slides: List[Slide]
 
-
-
-
 # LLM generation functions
 
 def _call_llm(prompt: str, schema: dict, fn_name: str) -> dict:
-    openai.api_key = _get_api_key()
+    openai.api_key = config._get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
     completion = openai.ChatCompletion.create(
-        model=_get_model(),
+        model=config._get_model(),
         messages=[{"role": "user", "content": prompt}],
         functions=[{"name": fn_name, "parameters": schema}],
         function_call={"name": fn_name},

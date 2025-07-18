@@ -1,17 +1,27 @@
 from typing import List, Dict
-from pdfminer.high_level import extract_pages
-from pdfminer.layout import LTTextContainer
+import re
+import zlib
+import base64
 
 
 def parse_pdf(path: str) -> List[Dict]:
-    """Parse PDF and return list of text chunks with page numbers."""
-    chunks = []
-    for page_number, page_layout in enumerate(extract_pages(path), start=1):
-        texts = []
-        for element in page_layout:
-            if isinstance(element, LTTextContainer):
-                texts.append(element.get_text())
-        text = "\n".join(texts).strip()
-        if text:
-            chunks.append({"page": page_number, "text": text})
-    return chunks
+    """Extract text from a basic PDF containing ASCII85 and Flate streams."""
+    with open(path, "rb") as f:
+        data = f.read()
+
+    texts = []
+    for match in re.finditer(rb'stream\n(.*?)endstream', data, flags=re.S):
+        stream = match.group(1).strip()
+        try:
+            decoded = base64.a85decode(stream, adobe=True)
+            decompressed = zlib.decompress(decoded)
+        except Exception:
+            continue
+        decoded_text = decompressed.decode("utf-8", errors="ignore")
+        parts = re.findall(r"\(([^)]*)\)", decoded_text)
+        if parts:
+            texts.append(" ".join(parts))
+    if not texts:
+        return []
+    combined = "\n".join(texts)
+    return [{"page": 1, "text": combined}]
