@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { AppBar, Toolbar, Button } from '@mui/material'
 import Home from './pages/Home.jsx'
@@ -11,9 +10,6 @@ import './App.css'
 export default function App() {
   const token = localStorage.getItem('token')
 
-
-function Documents() {
-  const [lastAnswer, setLastAnswer] = useState('')
   return (
     <Router>
       <AppBar position="static">
@@ -33,6 +29,5 @@ function Documents() {
         <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
-
   )
 }
