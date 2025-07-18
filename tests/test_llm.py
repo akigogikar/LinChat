@@ -41,6 +41,7 @@ sys.modules.setdefault('app.auth', auth_stub)
 
 import pytest
 from app import main
+import app.config as config
 
 class User:
     id = 1
@@ -48,7 +49,7 @@ class User:
 
 @pytest.mark.asyncio
 async def test_query_llm(monkeypatch):
-    monkeypatch.setattr(main, "_get_api_key", lambda: "key")
+    monkeypatch.setattr(config, "_get_api_key", lambda: "key")
     main.logger = types.SimpleNamespace(info=lambda *a, **k: None)
     monkeypatch.setattr(main, "add_audit_log", lambda *a, **k: None)
     monkeypatch.setattr(main.vector_db, "get_context", lambda prompt, top_k=5: ("ctx", []))
