@@ -38,6 +38,8 @@ class FastAPI:
         return self.route(path, 'GET')
     def post(self, path, **kwargs):
         return self.route(path, 'POST')
+    def delete(self, path, **kwargs):
+        return self.route(path, 'DELETE')
     def include_router(self, router, prefix='', tags=None):
         pass
     def on_event(self, event):
