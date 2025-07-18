@@ -10,7 +10,9 @@ import json
 import os
 import re
 import logging
-from . import config
+import asyncio
+import time
+
 
 from .logging_setup import setup_logging
 
@@ -69,10 +71,30 @@ app.include_router(
 )
 
 # In-memory store of citation metadata keyed by request ID
-CITATION_STORE: dict = {}
+# Each entry stores a timestamp and a mapping of citation IDs to metadata
+CITATION_STORE: dict[str, dict] = {}
+
+# Expiration for citation entries in seconds
+CITATION_TTL = int(os.getenv("CITATION_TTL", "3600"))
+# How often to check for expired citations
+CITATION_CLEANUP_INTERVAL = int(os.getenv("CITATION_CLEANUP_INTERVAL", "60"))
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+
+async def _cleanup_citations() -> None:
+    """Background task to purge expired citation entries."""
+    while True:
+        await asyncio.sleep(CITATION_CLEANUP_INTERVAL)
+        now = time.time()
+        expired = [
+            req_id
+            for req_id, data in list(CITATION_STORE.items())
+            if now - data.get("timestamp", 0) > CITATION_TTL
+        ]
+        for req_id in expired:
+            CITATION_STORE.pop(req_id, None)
 
 
 def _log_action(user_id: int, action: str) -> None:
@@ -91,18 +113,16 @@ def _insert_links(text: str, req_id: str) -> str:
 
 
 @app.on_event("startup")
-def _startup():
+async def _startup():
     """Initialize the database on startup."""
     logger.info("Starting LinChat in %s environment", ENV)
     init_db()
     vector_db._get_client()
-    import asyncio
     from .database import engine, Base
 
-    async def create_tables():
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    asyncio.get_event_loop().run_until_complete(create_tables())
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    asyncio.create_task(_cleanup_citations())
 
 
 security = HTTPBasic()
@@ -157,7 +177,10 @@ async def query_llm(
         src["offset_start"] += len(prefix)
         src["offset_end"] += len(prefix)
 
-    CITATION_STORE[request_id] = {src["id"]: src for src in sources}
+    CITATION_STORE[request_id] = {
+        "timestamp": time.time(),
+        "entries": {src["id"]: src for src in sources},
+    }
 
     user_content = f"{prefix}{context}\n\nScraped:\n{scraped_text}"
 
@@ -197,7 +220,13 @@ async def search_docs(query: str, top_k: int = 5, user=Depends(current_active_us
 @app.get("/source/{req_id}/{cid}")
 def get_source(req_id: str, cid: str, user=Depends(current_active_user)):
     """Return the stored source excerpt for a citation ID."""
-    info = CITATION_STORE.get(req_id, {}).get(cid)
+    store = CITATION_STORE.get(req_id)
+    if not store:
+        raise HTTPException(status_code=404, detail="Citation not found")
+    if time.time() - store.get("timestamp", 0) > CITATION_TTL:
+        CITATION_STORE.pop(req_id, None)
+        raise HTTPException(status_code=404, detail="Citation not found")
+    info = store.get("entries", {}).get(cid)
     if not info:
         raise HTTPException(status_code=404, detail="Citation not found")
     _log_action(user.id, f"get_source:{cid}")
