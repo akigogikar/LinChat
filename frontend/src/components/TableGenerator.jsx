@@ -1,4 +1,16 @@
 import { useState } from 'react'
+import {
+  Box,
+  Button,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from '@mui/material'
 import { generateTable } from '../api.js'
 
 export default function TableGenerator() {
@@ -19,28 +31,41 @@ export default function TableGenerator() {
     if (!table) return null
     if (table.error) return <div>{table.error}</div>
     return (
-      <table border="1">
-        <thead>
-          <tr>
-            {table.columns.map(col => <th key={col}>{col}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row, idx) => (
-            <tr key={idx}>{row.map((cell, i) => <td key={i}>{cell}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {table.columns.map(col => (
+                <TableCell key={col}>{col}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {table.rows.map((row, idx) => (
+              <TableRow key={idx}>
+                {row.map((cell, i) => (
+                  <TableCell key={i}>{cell}</TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     )
   }
 
   return (
-    <div>
-      <form onSubmit={handleGen} style={{ marginBottom: '1rem' }}>
-        <input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Table prompt" />
-        <button type="submit">Generate Table</button>
-      </form>
+    <Box>
+      <Box component="form" onSubmit={handleGen} sx={{ mb: 2, display: 'flex', gap: 1 }}>
+        <TextField
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          placeholder="Table prompt"
+          size="small"
+        />
+        <Button type="submit" variant="contained">Generate Table</Button>
+      </Box>
       {renderTable()}
-    </div>
+    </Box>
   )
 }

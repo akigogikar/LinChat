@@ -1,8 +1,11 @@
+import { useState } from 'react'
+import { Container, Typography } from '@mui/material'
 import FileUpload from './components/FileUpload.jsx'
 import QueryForm from './components/QueryForm.jsx'
 import TableGenerator from './components/TableGenerator.jsx'
 import ChartUploader from './components/ChartUploader.jsx'
 import ExportButtons from './components/ExportButtons.jsx'
+
 import Login from './Login.jsx'
 import Register from './Register.jsx'
 import { useState } from 'react'
@@ -17,6 +20,10 @@ function Home() {
 function Documents() {
   const [lastAnswer, setLastAnswer] = useState('')
   return (
+    <Container className="App">
+      <Typography variant="h4" gutterBottom>
+        LinChat Frontend
+      </Typography>
     <div style={{ padding: '1rem' }}>
       <h2>Documents</h2>
       <FileUpload />
@@ -24,7 +31,7 @@ function Documents() {
       <TableGenerator />
       <ChartUploader />
       <ExportButtons content={lastAnswer} />
-    </div>
+    </Container>
   )
 }
 

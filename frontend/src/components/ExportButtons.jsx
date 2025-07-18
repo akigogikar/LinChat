@@ -1,5 +1,6 @@
-import { exportPdf } from '../api.js'
 import { useState } from 'react'
+import { Box, Button, Link } from '@mui/material'
+import { exportPdf } from '../api.js'
 
 export default function ExportButtons({ content }) {
   const [url, setUrl] = useState(null)
@@ -14,13 +15,15 @@ export default function ExportButtons({ content }) {
   }
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <button onClick={handlePdf}>Export PDF</button>
+    <Box sx={{ mt: 2 }}>
+      <Button variant="contained" onClick={handlePdf}>
+        Export PDF
+      </Button>
       {url && (
-        <a href={url} download="output.pdf" style={{ marginLeft: '0.5rem' }}>
+        <Link href={url} download="output.pdf" sx={{ ml: 1 }}>
           Download
-        </a>
+        </Link>
       )}
-    </div>
+    </Box>
   )
 }
