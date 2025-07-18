@@ -53,3 +53,23 @@ export async function exportPdf(content) {
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
+
+export async function loginUser(username, password) {
+  const res = await fetch('/auth/jwt/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ username, password })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function registerUser(user) {
+  const res = await fetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(user)
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
