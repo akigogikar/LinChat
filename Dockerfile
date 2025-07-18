@@ -5,6 +5,8 @@ WORKDIR /app
 # Install Rust toolchain and libraries needed for custom analysis
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cargo build-essential pkg-config libfontconfig1-dev \
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

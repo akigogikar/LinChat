@@ -3,6 +3,8 @@ FROM python:3.11-slim AS base
 ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
         pkg-config libfontconfig1-dev build-essential \
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements into an intermediate location
@@ -21,6 +23,8 @@ RUN playwright install --with-deps
 FROM rust:slim AS rust
 RUN apt-get update && apt-get install -y --no-install-recommends \
         pkg-config libfontconfig1-dev \
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Final runtime image
@@ -28,6 +32,8 @@ FROM python:3.11-slim AS runtime
 ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
         pkg-config libfontconfig1-dev \
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+        libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies and Rust toolchain
