@@ -1,13 +1,9 @@
-
 import json
 import os
-
-
 CONFIG_DIR = os.path.dirname(__file__)
 ENV = os.getenv("LINCHAT_ENV", "development")
 CONFIG_FILE = os.path.join(CONFIG_DIR, f"config.{ENV}.json")
 DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
-
 
 
 def _read_config() -> dict:

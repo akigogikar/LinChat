@@ -10,10 +10,7 @@ from weasyprint import HTML
 import markdown as md
 from pptx import Presentation
 from pptx.util import Inches
-import os
 from . import config
-
-from .config import _get_api_key, _get_model, _read_config
 
 
 class Summary(BaseModel):
@@ -36,6 +33,7 @@ class SlideDeck(BaseModel):
     slides: List[Slide]
 
 # LLM generation functions
+
 
 def _call_llm(prompt: str, schema: dict, fn_name: str) -> dict:
     openai.api_key = config._get_api_key()

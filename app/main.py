@@ -6,13 +6,12 @@ import shutil
 import uuid
 import openai
 import pandas as pd
-import json
 import os
 import re
+from . import config
 import logging
 import asyncio
 import time
-
 
 from .logging_setup import setup_logging
 
@@ -124,11 +123,8 @@ async def _startup():
         await conn.run_sync(Base.metadata.create_all)
     asyncio.create_task(_cleanup_citations())
 
-
 security = HTTPBasic()
 ENV = os.getenv("LINCHAT_ENV", "development")
-
-
 
 
 def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
@@ -256,9 +252,10 @@ async def scrape_endpoint(url: str = None, query: str = None):
         raise HTTPException(status_code=500, detail="Failed to scrape")
     return {"url": url, "length": len(content)}
 
+
 @app.get("/admin/data")
 async def admin_data(auth: bool = Depends(_require_admin)):
-    conf = _read_config()
+    conf = config._read_config()
     key = conf.get("openrouter_api_key", "")
     model = conf.get("openrouter_model", config._get_model())
     async with async_session_maker() as session:
@@ -282,9 +279,6 @@ async def admin_data(auth: bool = Depends(_require_admin)):
             for log in logs
         ],
     }
-
-
-
 
 
 @app.post("/admin/set_key")
