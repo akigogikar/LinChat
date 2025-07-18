@@ -97,7 +97,7 @@ The backend runs on <http://localhost:8000>, the analysis service on <http://loc
 If `docker-compose` fails to start because port `8000` is already in use, another
 process or container is listening on that port. Stop the conflicting container
 with `docker ps`/`docker stop` or change the host port mapping in
-`docker-compose.yml`, for example `- "8080:8000"`.
+`docker-compose.yml`, for example `- "8002:8000"`.
 
 ### Prebuilt Images
 
