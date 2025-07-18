@@ -13,6 +13,8 @@ from pptx.util import Inches
 import os
 from . import config
 
+from .config import _get_api_key, _get_model, _read_config
+
 
 class Summary(BaseModel):
     title: str
@@ -32,7 +34,6 @@ class Slide(BaseModel):
 
 class SlideDeck(BaseModel):
     slides: List[Slide]
-
 
 # LLM generation functions
 

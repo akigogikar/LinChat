@@ -1,6 +1,7 @@
-import os
+
 import json
-from fastapi import HTTPException
+import os
+
 
 CONFIG_DIR = os.path.dirname(__file__)
 ENV = os.getenv("LINCHAT_ENV", "development")
@@ -8,9 +9,11 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, f"config.{ENV}.json")
 DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 
-def _read_config():
+
+def _read_config() -> dict:
     """Load configuration from file and environment variables."""
-    conf = {}
+    conf: dict = {}
+
     config_path = CONFIG_FILE if os.path.exists(CONFIG_FILE) else DEFAULT_CONFIG_FILE
     if os.path.exists(config_path):
         with open(config_path, "r") as f:
@@ -40,7 +43,8 @@ def _get_api_key() -> str:
     conf = _read_config()
     key = conf.get("openrouter_api_key")
     if not key:
-        raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
+        raise RuntimeError("OpenRouter API key not configured")
+
     return key
 
 
