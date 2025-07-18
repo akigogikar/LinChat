@@ -92,7 +92,7 @@ docker-compose up
 
 Using `docker-compose up --build` triggers a rebuild every time. Running `docker-compose build` first is preferred when you only need to rebuild after changing a Dockerfile or dependencies. The build step expects `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL` to be set so they can be passed as build arguments.
 
-The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:3000>.
+The backend runs on <http://localhost:8000>, the analysis service on <http://localhost:8001> and the frontend on <http://localhost:8080>.
 
 If `docker-compose` fails to start because port `8000` is already in use, another
 process or container is listening on that port. Stop the conflicting container
@@ -111,7 +111,7 @@ docker pull ghcr.io/<owner>/linchat-frontend:<tag>
 docker network create linchat
 docker run -d --name analysis --network linchat -p 8001:8001 ghcr.io/<owner>/linchat-analysis:<tag>
 docker run -d --name backend --network linchat -p 8000:8000 ghcr.io/<owner>/linchat-backend:<tag>
-docker run -d --name frontend --network linchat -p 3000:80 ghcr.io/<owner>/linchat-frontend:<tag>
+docker run -d --name frontend --network linchat -p 8080:80 ghcr.io/<owner>/linchat-frontend:<tag>
 ```
 
 Replace `<owner>` with your registry namespace and `<tag>` with the desired version.
@@ -132,7 +132,7 @@ A development container is available under `.devcontainer` so the full stack can
 docker-compose up --build
 ```
 
-Then open the forwarded port `3000` to access the UI.
+Then open the forwarded port `8080` to access the UI.
 
 ### Deploying to AWS
 
