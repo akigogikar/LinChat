@@ -11,6 +11,7 @@ import markdown as md
 from pptx import Presentation
 from pptx.util import Inches
 import os
+from . import config
 
 
 class Summary(BaseModel):
@@ -33,44 +34,13 @@ class SlideDeck(BaseModel):
     slides: List[Slide]
 
 
-# Configuration helpers redefined here to avoid circular imports
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
-
-
-def _read_config() -> dict:
-    conf = {}
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as f:
-            conf.update(json.load(f))
-    env_key = os.getenv("OPENROUTER_API_KEY")
-    if env_key:
-        conf.setdefault("openrouter_api_key", env_key)
-    env_model = os.getenv("OPENROUTER_MODEL")
-    if env_model:
-        conf.setdefault("openrouter_model", env_model)
-    return conf
-
-
-def _get_api_key() -> str:
-    conf = _read_config()
-    key = conf.get("openrouter_api_key")
-    if not key:
-        raise RuntimeError("OpenRouter API key not configured")
-    return key
-
-
-def _get_model() -> str:
-    conf = _read_config()
-    return conf.get("openrouter_model", "openai/gpt-3.5-turbo")
-
-
 # LLM generation functions
 
 def _call_llm(prompt: str, schema: dict, fn_name: str) -> dict:
-    openai.api_key = _get_api_key()
+    openai.api_key = config._get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
     completion = openai.ChatCompletion.create(
-        model=_get_model(),
+        model=config._get_model(),
         messages=[{"role": "user", "content": prompt}],
         functions=[{"name": fn_name, "parameters": schema}],
         function_call={"name": fn_name},
