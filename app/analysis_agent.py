@@ -3,13 +3,13 @@ import shutil
 import subprocess
 import tempfile
 import json
-from .main import _get_api_key, _get_model
+from . import config
 import openai
 
 
 def generate_rust_code(prompt: str) -> str:
     """Use the LLM to generate Rust code for custom analysis."""
-    openai.api_key = _get_api_key()
+    openai.api_key = config._get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
     messages = [
         {
@@ -20,7 +20,7 @@ def generate_rust_code(prompt: str) -> str:
         },
         {"role": "user", "content": prompt},
     ]
-    completion = openai.ChatCompletion.create(model=_get_model(), messages=messages)
+    completion = openai.ChatCompletion.create(model=config._get_model(), messages=messages)
     return completion.choices[0].message["content"]
 
 

@@ -10,6 +10,7 @@ import json
 import os
 import re
 import logging
+from . import config
 
 from .logging_setup import setup_logging
 
@@ -103,56 +104,13 @@ def _startup():
 
 
 security = HTTPBasic()
-
-CONFIG_DIR = os.path.dirname(__file__)
 ENV = os.getenv("LINCHAT_ENV", "development")
-CONFIG_FILE = os.path.join(CONFIG_DIR, f"config.{ENV}.json")
-DEFAULT_CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 
-def _read_config():
-    """Load configuration from file and environment variables."""
-    conf = {}
-    config_path = CONFIG_FILE if os.path.exists(CONFIG_FILE) else DEFAULT_CONFIG_FILE
-    if os.path.exists(config_path):
-        with open(config_path, "r") as f:
-            conf.update(json.load(f))
-    env_user = os.getenv("ADMIN_USERNAME")
-    if env_user:
-        conf.setdefault("admin_username", env_user)
-    env_password = os.getenv("ADMIN_PASSWORD")
-    if env_password:
-        conf.setdefault("admin_password", env_password)
-    env_key = os.getenv("OPENROUTER_API_KEY")
-    if env_key:
-        conf.setdefault("openrouter_api_key", env_key)
-    env_model = os.getenv("OPENROUTER_MODEL")
-    if env_model:
-        conf.setdefault("openrouter_model", env_model)
-    return conf
-
-
-def _write_config(conf: dict) -> None:
-    """Persist configuration to disk."""
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(conf, f, indent=2)
-
-
-def _get_api_key() -> str:
-    conf = _read_config()
-    key = conf.get("openrouter_api_key")
-    if not key:
-        raise HTTPException(status_code=500, detail="OpenRouter API key not configured")
-    return key
-
-
-def _get_model() -> str:
-    conf = _read_config()
-    return conf.get("openrouter_model", "openai/gpt-3.5-turbo")
 
 
 def _require_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    conf = _read_config()
+    conf = config._read_config()
     username = conf.get("admin_username", "admin")
     password = conf.get("admin_password")
     if not password:
@@ -171,7 +129,7 @@ async def query_llm(
     user=Depends(current_active_user),
 ):
     """Query OpenRouter LLM with context retrieval and optional web scraping."""
-    openai.api_key = _get_api_key()
+    openai.api_key = config._get_api_key()
     openai.base_url = "https://openrouter.ai/api/v1"
 
     request_id = str(uuid.uuid4())
@@ -211,7 +169,7 @@ async def query_llm(
 
     try:
         completion = openai.ChatCompletion.create(
-            model=_get_model(),
+            model=config._get_model(),
             messages=messages,
         )
         raw = completion.choices[0].message["content"]
@@ -270,9 +228,9 @@ async def scrape_endpoint(url: str = None, query: str = None):
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(auth: bool = Depends(_require_admin)):
-    conf = _read_config()
+    conf = config._read_config()
     key = conf.get("openrouter_api_key", "")
-    model = conf.get("openrouter_model", _get_model())
+    model = conf.get("openrouter_model", config._get_model())
     async with async_session_maker() as session:
         users = (await session.execute(select(User))).scalars().all()
         logs = (await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20))).scalars().all()
@@ -302,11 +260,11 @@ def set_key(
     model: str = Form(None),
     auth: bool = Depends(_require_admin),
 ):
-    conf = _read_config()
+    conf = config._read_config()
     conf["openrouter_api_key"] = key
     if model:
         conf["openrouter_model"] = model
-    _write_config(conf)
+    config._write_config(conf)
     return {"status": "saved"}
 
 

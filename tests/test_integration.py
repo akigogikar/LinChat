@@ -42,6 +42,7 @@ sys.modules.setdefault('app.auth', auth_stub)
 from fastapi.testclient import TestClient
 from app.main import app, current_active_user, CITATION_STORE
 from app import main
+import app.config as config
 
 class User:
     id = 1
@@ -62,8 +63,8 @@ def test_upload_and_query(monkeypatch, tmp_path):
     monkeypatch.setattr(main, "add_document", fake_add_doc)
     monkeypatch.setattr(main, "add_chunks", fake_add_chunks)
     monkeypatch.setattr(main, "add_audit_log", lambda *a, **k: None)
-    monkeypatch.setattr(main, "_get_api_key", lambda: "key")
-    monkeypatch.setattr(main, "_get_model", lambda: "model")
+    monkeypatch.setattr(config, "_get_api_key", lambda: "key")
+    monkeypatch.setattr(config, "_get_model", lambda: "model")
     main.logger = types.SimpleNamespace(info=lambda *a, **k: None)
     monkeypatch.setattr(main.vector_db, "add_embeddings", lambda *args, **kw: None)
     # create simple file
