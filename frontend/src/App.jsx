@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import { AppBar, Toolbar, Button } from '@mui/material'
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
@@ -11,7 +11,7 @@ export default function App() {
   const token = localStorage.getItem('token')
 
   return (
-    <Router>
+    <>
       <AppBar position="static">
         <Toolbar>
           <Button color="inherit" component={Link} to="/">Home</Button>
@@ -28,6 +28,6 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
-    </Router>
+    </>
   )
 }
