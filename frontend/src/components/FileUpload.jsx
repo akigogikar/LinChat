@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Box, Button, Typography } from '@mui/material'
 import { uploadFile } from '../api.js'
 
 export default function FileUpload() {
@@ -17,10 +18,14 @@ export default function FileUpload() {
   }
 
   return (
-    <form onSubmit={handleUpload} style={{ marginBottom: '1rem' }}>
+    <Box component="form" onSubmit={handleUpload} sx={{ mb: 2 }}>
       <input type="file" onChange={e => setFile(e.target.files[0])} />
-      <button type="submit">Upload</button>
-      <span>{status}</span>
-    </form>
+      <Button type="submit" variant="contained" sx={{ ml: 1 }}>
+        Upload
+      </Button>
+      <Typography variant="body2" sx={{ ml: 1 }}>
+        {status}
+      </Typography>
+    </Box>
   )
 }

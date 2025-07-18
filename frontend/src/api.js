@@ -54,6 +54,7 @@ export async function exportPdf(content) {
   return URL.createObjectURL(blob);
 }
 
+
 export async function getDocuments() {
   const res = await fetch('/documents');
   if (!res.ok) throw new Error(await res.text());
@@ -65,6 +66,7 @@ export async function deleteDocument(id) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
 
 export async function setShared(id, shared) {
   const res = await fetch(`/documents/${id}/share?shared=${shared}`, { method: 'POST' });

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Box, Button, TextField, Paper, Typography } from '@mui/material'
 import { queryLLM, getCitation } from '../api.js'
 
 export default function QueryForm({ onAnswer }) {
@@ -43,22 +44,32 @@ export default function QueryForm({ onAnswer }) {
   }
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
-        <input
+    <Box>
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ mb: 2, display: 'flex', gap: 1 }}
+      >
+        <TextField
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           placeholder="Ask a question"
-          style={{ width: '60%' }}
+          fullWidth
+          size="small"
         />
-        <button type="submit">Send</button>
-      </form>
+        <Button type="submit" variant="contained">
+          Send
+        </Button>
+      </Box>
       {renderAnswer()}
       {citation && (
-        <div style={{ border: '1px solid #ccc', padding: '0.5rem', marginTop: '1rem' }}>
-          <strong>Citation:</strong> {citation.text}
-        </div>
+        <Paper sx={{ p: 1, mt: 2 }}>
+          <Typography variant="subtitle2" component="span">
+            Citation:
+          </Typography>{' '}
+          {citation.text}
+        </Paper>
       )}
-    </div>
+    </Box>
   )
 }
