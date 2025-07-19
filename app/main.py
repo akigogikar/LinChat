@@ -49,8 +49,9 @@ from .auth import (
     current_active_user,
 )
 from .database import async_session_maker
-from .models import User, AuditLog
+from .models import User, AuditLog, Team
 from sqlalchemy import select
+import secrets
 
 app = FastAPI()
 app.include_router(
@@ -260,6 +261,7 @@ async def admin_data(auth: bool = Depends(_require_admin)):
     model = conf.get("openrouter_model", config._get_model())
     async with async_session_maker() as session:
         users = (await session.execute(select(User))).scalars().all()
+        teams = (await session.execute(select(Team))).scalars().all()
         logs = (
             await session.execute(
                 select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(20)
@@ -269,6 +271,7 @@ async def admin_data(auth: bool = Depends(_require_admin)):
         "key": key,
         "model": model,
         "users": [{"id": u.id, "email": u.email} for u in users],
+        "workspaces": [{"id": t.id, "name": t.name} for t in teams],
         "logs": [
             {
                 "id": log.id,
@@ -293,6 +296,75 @@ def set_key(
         conf["openrouter_model"] = model
     config._write_config(conf)
     return {"status": "saved"}
+
+
+@app.post("/admin/invite")
+async def invite_user(
+    email: str = Form(...),
+    team_id: int | None = Form(None),
+    auth: bool = Depends(_require_admin),
+):
+    """Create a new user with a temporary password."""
+    password = secrets.token_hex(8)
+    import hashlib
+    async with async_session_maker() as session:
+        user = User(
+            email=email,
+            hashed_password=hashlib.sha256(password.encode()).hexdigest(),
+            team_id=team_id,
+            is_active=True,
+            is_superuser=False,
+            is_verified=False,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+    return {"id": user.id, "password": password}
+
+
+@app.post("/admin/reset_password")
+async def admin_reset_password(
+    user_id: int = Form(...), auth: bool = Depends(_require_admin)
+):
+    """Reset a user's password and return the new one."""
+    new_pw = secrets.token_hex(8)
+    import hashlib
+    async with async_session_maker() as session:
+        user = await session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user.hashed_password = hashlib.sha256(new_pw.encode()).hexdigest()
+        await session.commit()
+    return {"status": "reset", "password": new_pw}
+
+
+@app.get("/admin/workspaces")
+async def list_workspaces(auth: bool = Depends(_require_admin)):
+    async with async_session_maker() as session:
+        teams = (await session.execute(select(Team))).scalars().all()
+    return {"workspaces": [{"id": t.id, "name": t.name} for t in teams]}
+
+
+@app.post("/admin/workspaces")
+async def create_workspace(
+    name: str = Form(...), auth: bool = Depends(_require_admin)
+):
+    async with async_session_maker() as session:
+        team = Team(name=name)
+        session.add(team)
+        await session.commit()
+        await session.refresh(team)
+    return {"id": team.id, "name": team.name}
+
+
+@app.delete("/admin/workspaces/{workspace_id}")
+async def delete_workspace(workspace_id: int, auth: bool = Depends(_require_admin)):
+    async with async_session_maker() as session:
+        team = await session.get(Team, workspace_id)
+        if team:
+            await session.delete(team)
+            await session.commit()
+    return {"status": "deleted"}
 
 
 @app.get("/documents")
