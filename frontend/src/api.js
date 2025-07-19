@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export async function queryLLM(prompt, sessionId) {
@@ -10,13 +12,23 @@ export async function queryLLM(prompt, sessionId) {
   return res.json();
 }
 
-export async function uploadFile(file, shared=false) {
+export async function uploadFile(file, shared = false, onProgress) {
   const form = new FormData();
   form.append('file', file);
   form.append('shared', shared);
-  const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  try {
+    const res = await axios.post(`${API_BASE}/upload`, form, {
+      onUploadProgress: e => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      }
+    });
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || err.message;
+    throw new Error(msg);
+  }
 }
 
 export async function generateTable(prompt) {
@@ -29,14 +41,23 @@ export async function generateTable(prompt) {
   return res.json();
 }
 
-export async function analyzeFile(file) {
+export async function analyzeFile(file, onProgress) {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch('http://localhost:8001/analysis', { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  const chart = res.headers.get('Chart');
-  const data = await res.json();
-  return { data, chart };
+  try {
+    const res = await axios.post('http://localhost:8001/analysis', form, {
+      onUploadProgress: e => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      }
+    });
+    const chart = res.headers['chart'];
+    return { data: res.data, chart };
+  } catch (err) {
+    const msg = err.response?.data?.detail || err.message;
+    throw new Error(msg);
+  }
 }
 
 export async function getCitation(reqId, cid) {
@@ -150,6 +171,17 @@ export async function createWorkspace(name) {
 
 export async function deleteWorkspace(id) {
   const res = await fetch(`${API_BASE}/admin/workspaces/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function assignWorkspace(userId, teamId) {
+  const form = new FormData();
+  form.append('team_id', teamId);
+  const res = await fetch(`${API_BASE}/users/${userId}/workspace`, {
+    method: 'POST',
+    body: form,
+  });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

@@ -4,6 +4,7 @@ from typing import Tuple, List, Dict
 
 SERVICE_URL = os.getenv("ANALYSIS_SERVICE_URL", "http://localhost:8001/analysis")
 
+
 async def analyze_file(path: str) -> Tuple[List[Dict], str | None]:
     """Upload a file to the Rust analysis service and return stats and chart."""
     async with httpx.AsyncClient() as client:
