@@ -35,6 +35,21 @@ def _write_config(conf: dict) -> None:
         json.dump(conf, f, indent=2)
 
 
+def set_openrouter_credentials(key: str, model: str | None = None) -> None:
+    """Persist OpenRouter API credentials using the config helpers."""
+    conf = _read_config()
+    conf["openrouter_api_key"] = key
+    if model is not None:
+        conf["openrouter_model"] = model
+    _write_config(conf)
+
+
+def has_openrouter_key() -> bool:
+    """Check if an API key is configured without exposing it."""
+    conf = _read_config()
+    return bool(conf.get("openrouter_api_key"))
+
+
 def _get_api_key() -> str:
     conf = _read_config()
     key = conf.get("openrouter_api_key")
