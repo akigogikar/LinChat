@@ -11,12 +11,14 @@ export default function WorkspaceSelector({ onChange }) {
   }, [])
 
   const handleChange = e => {
-    setValue(e.target.value)
-    if (onChange) onChange(e.target.value)
+    const id = e.target.value
+    setValue(id)
+    const ws = workspaces.find(w => w.id === id)
+    if (onChange) onChange(ws)
   }
 
   return (
-    <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+    <FormControl size="small" sx={{ minWidth: 150 }}>
       <InputLabel id="ws-label">Workspace</InputLabel>
       <Select labelId="ws-label" value={value} label="Workspace" onChange={handleChange}>
         {workspaces.map(ws => (

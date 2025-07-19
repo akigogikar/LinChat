@@ -50,7 +50,17 @@ Authentication for the admin interface uses HTTP basic auth. Update the OpenRout
 
 ### Environment Configuration
 
-Set `LINCHAT_ENV` to `development` or `production` to load the appropriate config. Database and vector store locations are controlled by `LINCHAT_DB_FILE` and `LINCHAT_VECTOR_DIR`. Logging is configured via `LOG_LEVEL` and `LOG_FILE`. For HTTPS deployments pass `--ssl-keyfile` and `--ssl-certfile` to `uvicorn` or use a reverse proxy.
+Set `LINCHAT_ENV` to `development` or `production` to load the appropriate config. Database and vector store locations are controlled by `LINCHAT_DB_FILE` and `LINCHAT_VECTOR_DIR`. Logging is configured via `LOG_LEVEL` and `LOG_FILE`.
+
+### HTTPS Setup
+
+To serve the API over HTTPS you can either place a reverse proxy such as Nginx or Traefik in front of Uvicorn or start Uvicorn with a certificate directly:
+
+```bash
+uvicorn app.main:app --ssl-keyfile /path/to/key.pem --ssl-certfile /path/to/cert.pem
+```
+
+When using a proxy, terminate TLS at the proxy and forward traffic to the backend on port `8000`.
 
 ### Authentication & Teams
 
