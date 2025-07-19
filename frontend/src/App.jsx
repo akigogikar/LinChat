@@ -1,6 +1,6 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import { AppBar, Toolbar, Button } from '@mui/material'
-import { useState } from 'react'
+import logo from './assets/logo.svg'
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
 import ChatPage from './pages/Chat.jsx'
@@ -24,8 +24,9 @@ export default function App() {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" color="primary">
         <Toolbar>
+          <Box component="img" src={logo} alt="LinChat" sx={{ height: 32, mr: 2 }} />
           <Button color="inherit" component={Link} to="/">Home</Button>
           <Button color="inherit" component={Link} to="/documents">Documents</Button>
           <Button color="inherit" component={Link} to="/chat">Chat</Button>
