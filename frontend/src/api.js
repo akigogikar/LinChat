@@ -1,10 +1,10 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export async function queryLLM(prompt) {
+export async function queryLLM(prompt, sessionId) {
   const res = await fetch(`${API_BASE}/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
+    body: JSON.stringify({ prompt, session_id: sessionId })
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
@@ -54,6 +54,18 @@ export async function exportPdf(content) {
   if (!res.ok) throw new Error(await res.text());
   const blob = await res.blob();
   return URL.createObjectURL(blob);
+}
+
+export async function createChatSession() {
+  const res = await fetch(`${API_BASE}/chat/sessions`, { method: 'POST' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getWorkspaces() {
+  const res = await fetch(`${API_BASE}/workspaces`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
 
 export async function loginUser(username, password) {
