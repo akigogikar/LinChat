@@ -6,7 +6,7 @@ import WorkspaceTable from './WorkspaceTable.jsx'
 import { getAdminData, setApiKey, inviteUser, resetPassword, createWorkspace, deleteWorkspace } from '../api.js'
 
 export default function AdminDashboard() {
-  const [data, setData] = useState({ users: [], logs: [], key: '', model: '', workspaces: [] })
+  const [data, setData] = useState({ users: [], logs: [], has_key: false, model: '', workspaces: [] })
   const [key, setKey] = useState('')
   const [model, setModel] = useState('')
   const [saved, setSaved] = useState(false)
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     getAdminData().then(d => {
       setData(d)
-      setKey(d.key)
+      setKey(d.has_key ? '********' : '')
       setModel(d.model)
     })
   }, [])

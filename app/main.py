@@ -261,7 +261,7 @@ async def scrape_endpoint(url: str = None, query: str = None):
 @app.get("/admin/data")
 async def admin_data(auth: bool = Depends(_require_admin)):
     conf = config._read_config()
-    key = conf.get("openrouter_api_key", "")
+    has_key = config.has_openrouter_key()
     model = conf.get("openrouter_model", config._get_model())
     async with async_session_maker() as session:
         users = (await session.execute(select(User))).scalars().all()
@@ -272,7 +272,7 @@ async def admin_data(auth: bool = Depends(_require_admin)):
             )
         ).scalars().all()
     return {
-        "key": key,
+        "has_key": has_key,
         "model": model,
         "users": [{"id": u.id, "email": u.email} for u in users],
         "workspaces": [{"id": t.id, "name": t.name} for t in teams],
@@ -294,11 +294,7 @@ def set_key(
     model: str = Form(None),
     auth: bool = Depends(_require_admin),
 ):
-    conf = config._read_config()
-    conf["openrouter_api_key"] = key
-    if model:
-        conf["openrouter_model"] = model
-    config._write_config(conf)
+    config.set_openrouter_credentials(key, model)
     return {"status": "saved"}
 
 
