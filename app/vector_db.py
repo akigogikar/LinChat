@@ -42,7 +42,9 @@ def _get_model() -> SentenceTransformer:
     return _model
 
 
-def add_embeddings(document_id: int, chunks: Iterable[Dict]) -> None:
+def add_embeddings(
+    document_id: int, chunks: Iterable[Dict], workspace_id: int | None = None
+) -> None:
     """Embed and store document chunks in the vector database."""
     collection = _get_collection()
     model = _get_model()
@@ -56,14 +58,16 @@ def add_embeddings(document_id: int, chunks: Iterable[Dict]) -> None:
             continue
         texts.append(text)
         ids.append(f"{document_id}_{page}")
-        metadata.append({"document_id": document_id, "page": page})
+        metadata.append(
+            {"document_id": document_id, "page": page, "workspace_id": workspace_id}
+        )
     if not texts:
         return
     embeddings = model.encode(texts).tolist()
     collection.add(documents=texts, embeddings=embeddings, ids=ids, metadatas=metadata)
 
 
-def add_web_embeddings(url: str, text: str) -> None:
+def add_web_embeddings(url: str, text: str, workspace_id: int | None = None) -> None:
     """Embed and store web page text with URL metadata."""
     collection = _get_collection()
     model = _get_model()
@@ -72,11 +76,16 @@ def add_web_embeddings(url: str, text: str) -> None:
         documents=[text],
         embeddings=embedding,
         ids=[url],
-        metadatas=[{"url": url}],
+        metadatas=[{"url": url, "workspace_id": workspace_id}],
     )
 
 
-def query(text: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None) -> List[Dict]:
+def query(
+    text: str,
+    top_k: int = 5,
+    allowed_ids: Iterable[int] | None = None,
+    workspace_id: int | None = None,
+) -> List[Dict]:
     """Return the most relevant chunks for the given text query."""
     collection = _get_collection()
     model = _get_model()
@@ -91,6 +100,8 @@ def query(text: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None) -
         doc_id = meta.get("document_id")
         if doc_id is not None and allowed_ids is not None and doc_id not in allowed_ids:
             continue
+        if workspace_id is not None and meta.get("workspace_id") not in (None, workspace_id):
+            continue
         out.append({
             "id": chunk_id,
             "text": doc,
@@ -103,9 +114,14 @@ def query(text: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None) -
     return out
 
 
-def get_context(prompt: str, top_k: int = 5, allowed_ids: Iterable[int] | None = None):
+def get_context(
+    prompt: str,
+    top_k: int = 5,
+    allowed_ids: Iterable[int] | None = None,
+    workspace_id: int | None = None,
+) -> tuple[str, List[Dict]]:
     """Return concatenated context and source metadata for LLM retrieval."""
-    chunks = query(prompt, top_k=top_k, allowed_ids=allowed_ids)
+    chunks = query(prompt, top_k=top_k, allowed_ids=allowed_ids, workspace_id=workspace_id)
     lines: List[str] = []
     sources: List[Dict] = []
     offset = 0

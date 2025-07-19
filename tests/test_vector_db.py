@@ -35,8 +35,8 @@ def test_add_and_query(monkeypatch):
     monkeypatch.setattr(vector_db, "_get_collection", lambda: collection)
     monkeypatch.setattr(vector_db, "_get_model", lambda: DummyModel())
 
-    vector_db.add_embeddings(1, [{"page": 1, "text": "hello"}])
-    res = vector_db.query("hello", top_k=1)
+    vector_db.add_embeddings(1, [{"page": 1, "text": "hello"}], workspace_id=1)
+    res = vector_db.query("hello", top_k=1, workspace_id=1)
     assert res and res[0]["text"] == "hello"
 
 
@@ -45,6 +45,6 @@ def test_add_web_embeddings(monkeypatch):
     monkeypatch.setattr(vector_db, "_get_collection", lambda: collection)
     monkeypatch.setattr(vector_db, "_get_model", lambda: DummyModel())
 
-    vector_db.add_web_embeddings("http://example.com", "web text")
-    res = vector_db.query("web", top_k=1)
+    vector_db.add_web_embeddings("http://example.com", "web text", workspace_id=2)
+    res = vector_db.query("web", top_k=1, workspace_id=2)
     assert res and res[0]["url"] == "http://example.com"

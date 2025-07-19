@@ -52,7 +52,11 @@ async def test_query_llm(monkeypatch):
     monkeypatch.setattr(config, "_get_api_key", lambda: "key")
     main.logger = types.SimpleNamespace(info=lambda *a, **k: None)
     monkeypatch.setattr(main, "add_audit_log", lambda *a, **k: None)
-    monkeypatch.setattr(main.vector_db, "get_context", lambda prompt, top_k=5: ("ctx", []))
+    monkeypatch.setattr(
+        main.vector_db,
+        "get_context",
+        lambda prompt, top_k=5, allowed_ids=None, workspace_id=None: ("ctx", []),
+    )
     class Resp:
         choices = [type("C", (), {"message": {"content": "answer"}})]
     def fake_create(**kwargs):

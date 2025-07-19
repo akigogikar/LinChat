@@ -154,19 +154,21 @@ async def query_llm(
     request_id = str(uuid.uuid4())
     allowed_ids = allowed_document_ids(user.id, user.team_id)
     try:
-        context, sources = vector_db.get_context(prompt, top_k=top_k, allowed_ids=allowed_ids)
+        context, sources = vector_db.get_context(
+            prompt, top_k=top_k, allowed_ids=allowed_ids, workspace_id=user.team_id
+        )
     except TypeError:
         # fallback for older implementations during tests
         context, sources = vector_db.get_context(prompt, top_k=top_k)
 
     scraped_text = ""
     if search and not url:
-        urls = await scrape_search(search, max_results=1)
+        urls = await scrape_search(search, max_results=1, workspace_id=user.team_id)
         if not urls:
             raise HTTPException(status_code=404, detail="No search results")
         url = urls[0]
     if url:
-        scraped_text = await scrape_url(url) or ""
+        scraped_text = await scrape_url(url, workspace_id=user.team_id) or ""
 
     prefix = f"Question: {prompt}\n\nContext:\n"
     # update source offsets relative to full user message
@@ -207,7 +209,9 @@ async def search_docs(query: str, top_k: int = 5, user=Depends(current_active_us
     """Retrieve relevant document chunks from the vector DB."""
     allowed_ids = allowed_document_ids(user.id, user.team_id)
     try:
-        results = vector_db.query(query, top_k=top_k, allowed_ids=allowed_ids)
+        results = vector_db.query(
+            query, top_k=top_k, allowed_ids=allowed_ids, workspace_id=user.team_id
+        )
     except TypeError:
         results = vector_db.query(query, top_k=top_k)
     _log_action(user.id, "search")
@@ -357,6 +361,39 @@ async def create_workspace(
     return {"id": team.id, "name": team.name}
 
 
+@app.get("/workspaces")
+async def user_workspaces(user=Depends(current_active_user)):
+    """Return all workspaces."""
+    async with async_session_maker() as session:
+        teams = (await session.execute(select(Team))).scalars().all()
+    return {"workspaces": [{"id": t.id, "name": t.name} for t in teams]}
+
+
+@app.post("/workspaces")
+async def create_user_workspace(name: str = Form(...), user=Depends(current_active_user)):
+    """Allow any user to create a new workspace."""
+    async with async_session_maker() as session:
+        team = Team(name=name)
+        session.add(team)
+        await session.commit()
+        await session.refresh(team)
+    return {"id": team.id, "name": team.name}
+
+
+@app.post("/users/{user_id}/workspace")
+async def assign_user_workspace(
+    user_id: int, team_id: int = Form(...), auth: bool = Depends(_require_admin)
+):
+    """Assign a user to a workspace."""
+    async with async_session_maker() as session:
+        user_obj = await session.get(User, user_id)
+        if not user_obj:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_obj.team_id = team_id
+        await session.commit()
+    return {"status": "assigned"}
+
+
 @app.delete("/admin/workspaces/{workspace_id}")
 async def delete_workspace(workspace_id: int, auth: bool = Depends(_require_admin)):
     async with async_session_maker() as session:
@@ -420,7 +457,7 @@ async def upload_file(
     document_id = add_document(stored_name, owner_id=user.id, team_id=user.team_id, shared=shared)
     add_audit_log(user.id, f"upload:{stored_name}")
     add_chunks(document_id, [(c.get("page"), c.get("text")) for c in parsed_chunks])
-    vector_db.add_embeddings(document_id, parsed_chunks)
+    vector_db.add_embeddings(document_id, parsed_chunks, workspace_id=user.team_id)
 
     return {"document_id": document_id, "chunks": len(parsed_chunks)}
 

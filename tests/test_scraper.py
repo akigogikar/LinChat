@@ -25,14 +25,16 @@ async def test_scrape_url(monkeypatch):
     async def fake_fetch(url):
         return "<html><body><p>Hello</p></body></html>"
     called = {}
-    def fake_add(url, text):
+    def fake_add(url, text, workspace_id=None):
         called["url"] = url
         called["text"] = text
+        called["workspace_id"] = workspace_id
     monkeypatch.setattr(service, "_fetch_html", fake_fetch)
     monkeypatch.setattr(vector_db, "add_web_embeddings", fake_add)
-    text = await service.scrape_url("http://example.com")
+    text = await service.scrape_url("http://example.com", workspace_id=1)
     assert text == "Hello"
     assert called["url"] == "http://example.com"
+    assert called["workspace_id"] == 1
 
 
 @pytest.mark.asyncio
@@ -43,10 +45,11 @@ async def test_scrape_search(monkeypatch):
             def raise_for_status(self):
                 pass
         return Resp()
-    async def fake_scrape_url(url):
+    async def fake_scrape_url(url, workspace_id=None):
+        assert workspace_id == 2
         return "content"
     import types as _types
     monkeypatch.setitem(sys.modules, 'httpx', _types.SimpleNamespace(get=fake_get))
     monkeypatch.setattr(service, "scrape_url", fake_scrape_url)
-    urls = await service.scrape_search("query", max_results=1)
+    urls = await service.scrape_search("query", max_results=1, workspace_id=2)
     assert urls == ["http://example.com"]
