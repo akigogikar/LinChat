@@ -12,7 +12,13 @@ export default function Login() {
     e.preventDefault()
     try {
       const data = await loginUser(username, password)
-      if (data.access_token) localStorage.setItem('token', data.access_token)
+      if (data.access_token) {
+        localStorage.setItem('token', data.access_token)
+        // trigger onboarding on first login
+        if (!localStorage.getItem('onboardingSeen')) {
+          localStorage.setItem('showOnboarding', 'true')
+        }
+      }
       navigate('/')
     } catch (err) {
       alert(err.message)

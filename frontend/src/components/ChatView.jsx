@@ -1,16 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Paper, Typography, Link } from '@mui/material'
-import { createChatSession, queryLLM, exportPdf } from '../api.js'
+import { useState } from 'react'
+import {
+  Box,
+  Button,
+  TextField,
+  Paper,
+  Typography,
+  Link,
+} from '@mui/material'
+import { queryLLM, exportPdf, uploadFile } from '../api.js'
+import { useChatSession } from '../ChatContext.jsx'
 
 export default function ChatView() {
-  const [sessionId, setSessionId] = useState(null)
+  const sessionId = useChatSession()
   const [prompt, setPrompt] = useState('')
   const [messages, setMessages] = useState([])
   const [pdfUrl, setPdfUrl] = useState(null)
 
-  useEffect(() => {
-    createChatSession().then(res => setSessionId(res.id))
-  }, [])
+  function handleDragOver(e) {
+    e.preventDefault()
+  }
+
+  async function handleDrop(e) {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (!file) return
+    try {
+      const res = await uploadFile(file)
+      setMessages(m => [
+        ...m,
+        { role: 'assistant', content: `Uploaded ${res.document_id}` },
+      ])
+    } catch (err) {
+      setMessages(m => [...m, { role: 'assistant', content: err.toString() }])
+    }
+  }
 
   async function handleSend(e) {
     e.preventDefault()
@@ -34,7 +57,7 @@ export default function ChatView() {
   }
 
   return (
-    <Box>
+    <Box onDragOver={handleDragOver} onDrop={handleDrop}>
       <Box component="form" onSubmit={handleSend} sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField value={prompt} onChange={e => setPrompt(e.target.value)} fullWidth size="small" />
         <Button type="submit" variant="contained">Send</Button>
