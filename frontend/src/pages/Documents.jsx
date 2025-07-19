@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { Box, Button } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { getDocuments, deleteDocument, setShared } from '../api.js'
+import UploadDropzone from '../components/UploadDropzone.jsx'
 
 export default function Documents() {
   const [docs, setDocs] = useState([])
+  const [sortModel, setSortModel] = useState([{ field: 'filename', sort: 'asc' }])
+  const [filterModel, setFilterModel] = useState({ items: [] })
 
   useEffect(() => {
     load()
@@ -33,6 +36,14 @@ export default function Documents() {
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'filename', headerName: 'Filename', flex: 1 },
+    { field: 'owner', headerName: 'Owner', width: 120 },
+    {
+      field: 'updated_at',
+      headerName: 'Updated',
+      width: 160,
+      valueGetter: params =>
+        params.row.updated_at ? new Date(params.row.updated_at).toLocaleString() : '',
+    },
     {
       field: 'is_shared',
       headerName: 'Shared',
@@ -60,12 +71,17 @@ export default function Documents() {
   return (
     <Box>
       <h2>Documents</h2>
+      <UploadDropzone onUploaded={load} />
       <DataGrid
         autoHeight
         rows={docs}
         columns={columns}
         disableRowSelectionOnClick
         density="compact"
+        sortModel={sortModel}
+        onSortModelChange={setSortModel}
+        filterModel={filterModel}
+        onFilterModelChange={setFilterModel}
       />
     </Box>
   )
