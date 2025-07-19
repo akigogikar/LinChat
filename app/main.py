@@ -49,7 +49,7 @@ from .auth import (
     current_active_user,
 )
 from .database import async_session_maker
-from .models import User, AuditLog, Team
+from .models import User, AuditLog, Team, ChatThread, ChatMessage
 from sqlalchemy import select
 import secrets
 
@@ -145,6 +145,7 @@ async def query_llm(
     url: Optional[str] = None,
     search: Optional[str] = None,
     top_k: int = 5,
+    session_id: int | None = None,
     user=Depends(current_active_user),
 ):
     """Query OpenRouter LLM with context retrieval and optional web scraping."""
@@ -153,6 +154,22 @@ async def query_llm(
 
     request_id = str(uuid.uuid4())
     allowed_ids = allowed_document_ids(user.id, user.team_id)
+
+    # create or validate chat session
+    async with async_session_maker() as session:
+        if session_id is None:
+            thread = ChatThread(user_id=user.id, workspace_id=user.team_id)
+            session.add(thread)
+            await session.commit()
+            await session.refresh(thread)
+            session_id = thread.id
+        else:
+            thread = await session.get(ChatThread, session_id)
+            if not thread:
+                raise HTTPException(status_code=404, detail="Chat session not found")
+
+        session.add(ChatMessage(thread_id=session_id, user_id=user.id, role="user", content=prompt))
+        await session.commit()
     try:
         context, sources = vector_db.get_context(
             prompt, top_k=top_k, allowed_ids=allowed_ids, workspace_id=user.team_id
@@ -198,8 +215,18 @@ async def query_llm(
         )
         raw = completion.choices[0].message["content"]
         response_text = _insert_links(raw, request_id)
+        async with async_session_maker() as session:
+            session.add(
+                ChatMessage(
+                    thread_id=session_id,
+                    user_id=user.id,
+                    role="assistant",
+                    content=raw,
+                )
+            )
+            await session.commit()
         _log_action(user.id, "query_llm")
-        return {"response": response_text, "request_id": request_id}
+        return {"response": response_text, "request_id": request_id, "session_id": session_id}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -494,6 +521,37 @@ async def custom_analysis(
     result = run_custom_analysis(path, prompt)
     _log_action(user.id, "custom_analysis")
     return result
+
+
+@app.post("/chat/sessions")
+async def create_chat_session(user=Depends(current_active_user)):
+    async with async_session_maker() as session:
+        thread = ChatThread(user_id=user.id, workspace_id=user.team_id)
+        session.add(thread)
+        await session.commit()
+        await session.refresh(thread)
+    return {"id": thread.id}
+
+
+@app.get("/chat/{session_id}/export/pdf")
+async def export_chat_pdf(session_id: int, user=Depends(current_active_user)):
+    async with async_session_maker() as session:
+        thread = await session.get(ChatThread, session_id)
+        if not thread:
+            raise HTTPException(status_code=404, detail="Chat session not found")
+        messages = (
+            await session.execute(
+                select(ChatMessage)
+                .where(ChatMessage.thread_id == session_id)
+                .order_by(ChatMessage.timestamp)
+            )
+        ).scalars().all()
+    lines = [
+        f"**{'User' if m.role == 'user' else 'Assistant'}:** {m.content}"
+        for m in messages
+    ]
+    transcript = "\n\n".join(lines)
+    return export_pdf(transcript, markdown=True, user=user)
 
 
 @app.post("/export/pdf")
