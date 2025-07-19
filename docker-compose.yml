@@ -12,6 +12,8 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL}
       - LINCHAT_DB_FILE=/data/data.db
+      - CITATION_TTL=3600
+      - CITATION_CLEANUP_INTERVAL=60
     volumes:
       - ./uploads:/app/uploads
       - ./data:/data
