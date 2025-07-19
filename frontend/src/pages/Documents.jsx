@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Box, Button } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
-import { getDocuments, deleteDocument, setShared } from '../api.js'
+import { API_BASE, getDocuments, deleteDocument, setShared } from '../api.js'
 
 export default function Documents() {
   const [docs, setDocs] = useState([])
@@ -42,7 +42,7 @@ export default function Documents() {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 180,
+      width: 240,
       sortable: false,
       renderCell: params => (
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -51,6 +51,9 @@ export default function Documents() {
           </Button>
           <Button size="small" onClick={() => handleToggle(params.row.id, params.row.is_shared)}>
             {params.row.is_shared ? 'Unshare' : 'Share'}
+          </Button>
+          <Button size="small" onClick={() => navigator.clipboard.writeText(`${API_BASE}/documents/${params.row.id}`)}>
+            Copy Link
           </Button>
         </Box>
       ),
