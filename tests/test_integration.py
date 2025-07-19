@@ -75,7 +75,11 @@ def test_upload_and_query(monkeypatch, tmp_path):
     assert resp.status_code == 200
     assert resp.json()["document_id"] == 1
 
-    monkeypatch.setattr(main.vector_db, "get_context", lambda prompt, top_k=5: ("ctx", []))
+    monkeypatch.setattr(
+        main.vector_db,
+        "get_context",
+        lambda prompt, top_k=5, allowed_ids=None, workspace_id=None: ("ctx", []),
+    )
     class Resp:
         choices = [type("C", (), {"message": {"content": "answer"}})]
     def fake_create(**kwargs):

@@ -29,7 +29,7 @@ def _extract_text(html: str) -> str:
     return "\n".join(t.strip() for t in texts if t.strip())
 
 
-async def scrape_url(url: str) -> Optional[str]:
+async def scrape_url(url: str, workspace_id: int | None = None) -> Optional[str]:
     """Fetch the given URL and store its contents in the vector DB."""
     try:
         html = await _fetch_html(url)
@@ -39,11 +39,13 @@ async def scrape_url(url: str) -> Optional[str]:
     if not text:
         return None
     # Store in vector DB with url metadata
-    vector_db.add_web_embeddings(url, text)
+    vector_db.add_web_embeddings(url, text, workspace_id=workspace_id)
     return text
 
 
-async def scrape_search(query: str, max_results: int = 1) -> List[str]:
+async def scrape_search(
+    query: str, max_results: int = 1, workspace_id: int | None = None
+) -> List[str]:
     """Search DuckDuckGo and scrape the top results."""
     import httpx
 
@@ -54,7 +56,7 @@ async def scrape_search(query: str, max_results: int = 1) -> List[str]:
     links = [a["href"] for a in soup.select("a.result__a") if a.get("href")]
     scraped = []
     for url in links[:max_results]:
-        content = await scrape_url(url)
+        content = await scrape_url(url, workspace_id=workspace_id)
         if content:
             scraped.append(url)
     return scraped
