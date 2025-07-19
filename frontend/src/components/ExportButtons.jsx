@@ -16,7 +16,7 @@ export default function ExportButtons({ content }) {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Button variant="contained" onClick={handlePdf}>
+      <Button variant="contained" onClick={handlePdf} aria-label="export PDF">
         Export PDF
       </Button>
       {url && (

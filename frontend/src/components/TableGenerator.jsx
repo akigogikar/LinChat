@@ -10,6 +10,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Stack,
 } from '@mui/material'
 import { generateTable } from '../api.js'
 
@@ -56,15 +57,23 @@ export default function TableGenerator() {
 
   return (
     <Box>
-      <Box component="form" onSubmit={handleGen} sx={{ mb: 2, display: 'flex', gap: 1 }}>
+      <Stack
+        component="form"
+        onSubmit={handleGen}
+        spacing={1}
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ mb: 2 }}
+      >
         <TextField
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           placeholder="Table prompt"
           size="small"
         />
-        <Button type="submit" variant="contained">Generate Table</Button>
-      </Box>
+        <Button type="submit" variant="contained" aria-label="generate table">
+          Generate Table
+        </Button>
+      </Stack>
       {renderTable()}
     </Box>
   )

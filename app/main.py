@@ -303,7 +303,9 @@ async def admin_data(auth: bool = Depends(_require_admin)):
     return {
         "has_key": has_key,
         "model": model,
-        "users": [{"id": u.id, "email": u.email} for u in users],
+        "users": [
+            {"id": u.id, "email": u.email, "team_id": u.team_id} for u in users
+        ],
         "workspaces": [{"id": t.id, "name": t.name} for t in teams],
         "logs": [
             {
