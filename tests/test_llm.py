@@ -62,6 +62,43 @@ async def test_query_llm(monkeypatch):
     def fake_create(**kwargs):
         return Resp()
     monkeypatch.setattr(main.openai.ChatCompletion, "create", fake_create)
+    class DummyModel:
+        def __init__(self, *a, **k):
+            self.id = 1
+
+    monkeypatch.setattr(main, "ChatThread", DummyModel)
+    monkeypatch.setattr(main, "ChatMessage", DummyModel)
+    class DummyScalar:
+        def all(self):
+            return []
+
+    class DummyResult:
+        def scalars(self):
+            return DummyScalar()
+
+    class DummySession:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        def add(self, *a, **k):
+            pass
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, *a, **k):
+            pass
+
+        async def get(self, *a, **k):
+            return None
+
+        async def execute(self, *a, **k):
+            return DummyResult()
+
+    monkeypatch.setattr(main, "async_session_maker", lambda: DummySession())
     main.CITATION_STORE.clear()
     result = await main.query_llm("hi", user=User())
     assert result["response"] == "answer"

@@ -44,3 +44,25 @@ class AuditLog(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     action: Mapped[str] = mapped_column(String)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ChatThread(Base):
+    __tablename__ = "chat_threads"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    workspace_id: Mapped[Optional[int]] = mapped_column(ForeignKey("teams.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    messages = relationship("ChatMessage", back_populates="thread")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    thread_id: Mapped[int] = mapped_column(ForeignKey("chat_threads.id"))
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    role: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(String)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    thread = relationship("ChatThread", back_populates="messages")
