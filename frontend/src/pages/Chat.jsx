@@ -1,17 +1,24 @@
 import { useOutletContext } from 'react-router-dom'
 import ChatView from '../components/ChatView.jsx'
-import { Container, Typography } from '@mui/material'
+import WorkspaceSelector from '../components/WorkspaceSelector.jsx'
+import { Container, Stack, Typography } from '@mui/material'
 
 export default function ChatPage() {
-  const { workspace } = useOutletContext()
+
+const { workspace, setWorkspace } = useOutletContext()
+
 
   return (
     <Container sx={{ mt: 2 }}>
-      {workspace ? (
-        <ChatView key={workspace.id} />
-      ) : (
-        <Typography>Select a workspace</Typography>
-      )}
+      <Stack spacing={2}>
+        <WorkspaceSelector onChange={setWorkspace} />
+        {workspace ? (
+          <ChatView key={workspace.id} />
+        ) : (
+          <Typography>Select a workspace</Typography>
+        )}
+      </Stack>
     </Container>
   )
 }
+
