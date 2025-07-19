@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, Typography, Stack } from '@mui/material'
 import { uploadFile } from '../api.js'
 
 export default function FileUpload() {
@@ -18,14 +18,22 @@ export default function FileUpload() {
   }
 
   return (
-    <Box component="form" onSubmit={handleUpload} sx={{ mb: 2 }}>
-      <input type="file" onChange={e => setFile(e.target.files[0])} />
-      <Button type="submit" variant="contained" sx={{ ml: 1 }}>
+    <Stack
+      component="form"
+      onSubmit={handleUpload}
+      spacing={1}
+      direction={{ xs: 'column', sm: 'row' }}
+      sx={{ mb: 2 }}
+    >
+      <input
+        type="file"
+        aria-label="choose file"
+        onChange={e => setFile(e.target.files[0])}
+      />
+      <Button type="submit" variant="contained" aria-label="upload file">
         Upload
       </Button>
-      <Typography variant="body2" sx={{ ml: 1 }}>
-        {status}
-      </Typography>
-    </Box>
+      <Typography variant="body2">{status}</Typography>
+    </Stack>
   )
 }

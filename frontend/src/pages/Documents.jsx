@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Box, Button } from '@mui/material'
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Stack,
+} from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { getDocuments, deleteDocument, setShared } from '../api.js'
 
 export default function Documents() {
   const [docs, setDocs] = useState([])
+  const [deleteId, setDeleteId] = useState(null)
 
   useEffect(() => {
     load()
@@ -19,10 +29,15 @@ export default function Documents() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Delete document?')) return
-    await deleteDocument(id)
-    setDocs(docs.filter(d => d.id !== id))
+  async function confirmDelete() {
+    if (!deleteId) return
+    await deleteDocument(deleteId)
+    setDocs(docs.filter(d => d.id !== deleteId))
+    setDeleteId(null)
+  }
+
+  const handleDelete = id => {
+    setDeleteId(id)
   }
 
   async function handleToggle(id, shared) {
@@ -58,7 +73,7 @@ export default function Documents() {
   ]
 
   return (
-    <Box>
+    <Stack spacing={2}>
       <h2>Documents</h2>
       <DataGrid
         autoHeight
@@ -67,6 +82,24 @@ export default function Documents() {
         disableRowSelectionOnClick
         density="compact"
       />
-    </Box>
+      <Dialog
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        aria-labelledby="confirm-delete-title"
+      >
+        <DialogTitle id="confirm-delete-title">Delete Document</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this document?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
+          <Button onClick={confirmDelete} autoFocus aria-label="confirm delete">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Stack>
   )
 }

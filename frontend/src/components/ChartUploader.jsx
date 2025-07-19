@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button } from '@mui/material'
+import { Box, Button, Stack } from '@mui/material'
 import { analyzeFile } from '../api.js'
 
 export default function ChartUploader() {
@@ -21,12 +21,22 @@ export default function ChartUploader() {
 
   return (
     <Box>
-      <Box component="form" onSubmit={handleAnalyze} sx={{ mb: 2 }}>
-        <input type="file" onChange={e => setFile(e.target.files[0])} />
-        <Button type="submit" variant="contained" sx={{ ml: 1 }}>
+      <Stack
+        component="form"
+        onSubmit={handleAnalyze}
+        spacing={1}
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ mb: 2 }}
+      >
+        <input
+          type="file"
+          aria-label="choose file for analysis"
+          onChange={e => setFile(e.target.files[0])}
+        />
+        <Button type="submit" variant="contained" aria-label="analyze file">
           Analyze
         </Button>
-      </Box>
+      </Stack>
       {chart && <img src={`data:image/png;base64,${chart}`} alt="chart" />}
       {stats && Array.isArray(stats) && (
         <pre>{JSON.stringify(stats, null, 2)}</pre>

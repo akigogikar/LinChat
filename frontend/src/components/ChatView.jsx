@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Box, Button, TextField, Paper, Typography, Link } from '@mui/material'
+import { Box, Button, TextField, Paper, Typography, Link, Stack } from '@mui/material'
 import { createChatSession, queryLLM, exportPdf } from '../api.js'
 
 export default function ChatView() {
@@ -35,19 +35,39 @@ export default function ChatView() {
 
   return (
     <Box>
-      <Box component="form" onSubmit={handleSend} sx={{ mb: 2, display: 'flex', gap: 1 }}>
-        <TextField value={prompt} onChange={e => setPrompt(e.target.value)} fullWidth size="small" />
-        <Button type="submit" variant="contained">Send</Button>
-      </Box>
-      {messages.map((m, idx) => (
-        <Paper key={idx} sx={{ p: 1, mb: 1 }}>
-          <Typography variant="subtitle2" component="span">
-            {m.role === 'user' ? 'User:' : 'Assistant:'}
-          </Typography>{' '}
-          <span dangerouslySetInnerHTML={{ __html: m.content }} />
-        </Paper>
-      ))}
-      <Button variant="contained" onClick={handleExport} sx={{ mt: 2 }}>
+      <Stack
+        component="form"
+        onSubmit={handleSend}
+        spacing={1}
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ mb: 2 }}
+      >
+        <TextField
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          fullWidth
+          size="small"
+        />
+        <Button type="submit" variant="contained" aria-label="send message">
+          Send
+        </Button>
+      </Stack>
+      <Stack role="log" spacing={1}>
+        {messages.map((m, idx) => (
+          <Paper key={idx} sx={{ p: 1 }}>
+            <Typography variant="subtitle2" component="span">
+              {m.role === 'user' ? 'User:' : 'Assistant:'}
+            </Typography>{' '}
+            <span dangerouslySetInnerHTML={{ __html: m.content }} />
+          </Paper>
+        ))}
+      </Stack>
+      <Button
+        variant="contained"
+        onClick={handleExport}
+        sx={{ mt: 2 }}
+        aria-label="export conversation as PDF"
+      >
         Export PDF
       </Button>
       {pdfUrl && (
