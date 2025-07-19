@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button, CircularProgress } from '@mui/material'
+import { Box, Button, Stack, CircularProgress } from '@mui/material'
 import { analyzeFile } from '../api.js'
 
 export default function ChartUploader() {
@@ -24,9 +24,24 @@ export default function ChartUploader() {
 
   return (
     <Box>
-      <Box component="form" onSubmit={handleAnalyze} sx={{ mb: 2 }}>
-        <input type="file" onChange={e => setFile(e.target.files[0])} />
-        <Button type="submit" variant="contained" sx={{ ml: 1 }} disabled={progress !== null}>
+      <Stack
+        component="form"
+        onSubmit={handleAnalyze}
+        spacing={1}
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ mb: 2 }}
+      >
+        <input
+          type="file"
+          aria-label="choose file for analysis"
+          onChange={e => setFile(e.target.files[0])}
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          aria-label="analyze file"
+          disabled={progress !== null}
+        >
           Analyze
         </Button>
         {progress !== null && (
@@ -34,7 +49,8 @@ export default function ChartUploader() {
             <CircularProgress variant="determinate" value={progress} />
           </Box>
         )}
-      </Box>
+      </Stack>
+
       {chart && <img src={`data:image/png;base64,${chart}`} alt="chart" />}
       {stats && Array.isArray(stats) && (
         <pre>{JSON.stringify(stats, null, 2)}</pre>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box, Button, TextField, Paper, Typography } from '@mui/material'
+import { Box, Button, TextField, Paper, Typography, Stack } from '@mui/material'
 import { queryLLM, getCitation } from '../api.js'
 
 export default function QueryForm({ onAnswer }) {
@@ -45,10 +45,12 @@ export default function QueryForm({ onAnswer }) {
 
   return (
     <Box>
-      <Box
+      <Stack
         component="form"
         onSubmit={handleSubmit}
-        sx={{ mb: 2, display: 'flex', gap: 1 }}
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1}
+        sx={{ mb: 2 }}
       >
         <TextField
           value={prompt}
@@ -57,10 +59,10 @@ export default function QueryForm({ onAnswer }) {
           fullWidth
           size="small"
         />
-        <Button type="submit" variant="contained">
+        <Button type="submit" variant="contained" aria-label="send query">
           Send
         </Button>
-      </Box>
+      </Stack>
       {renderAnswer()}
       {citation && (
         <Paper sx={{ p: 1, mt: 2 }}>

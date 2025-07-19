@@ -18,7 +18,11 @@ export default function WorkspaceTable({ workspaces, onDelete }) {
               <TableCell>{w.id}</TableCell>
               <TableCell>{w.name}</TableCell>
               <TableCell>
-                <IconButton size="small" onClick={() => onDelete(w.id)}>
+                <IconButton
+                  size="small"
+                  aria-label="delete workspace"
+                  onClick={() => onDelete(w.id)}
+                >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </TableCell>

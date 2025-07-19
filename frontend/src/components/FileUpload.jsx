@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Box, Button, Typography, LinearProgress } from '@mui/material'
+import { Box, Button, Typography, Stack, LinearProgress } from '@mui/material'
+
 import { uploadFile } from '../api.js'
 
 export default function FileUpload() {
@@ -21,19 +22,35 @@ export default function FileUpload() {
   }
 
   return (
-    <Box component="form" onSubmit={handleUpload} sx={{ mb: 2 }}>
-      <input type="file" onChange={e => setFile(e.target.files[0])} />
-      <Button type="submit" variant="contained" sx={{ ml: 1 }} disabled={progress !== null}>
-        Upload
-      </Button>
-      {progress !== null && (
-        <Box sx={{ width: '100%', ml: 1, mr: 1 }}>
-          <LinearProgress variant="determinate" value={progress} />
-        </Box>
-      )}
-      <Typography variant="body2" sx={{ ml: 1 }}>
-        {status}
-      </Typography>
+<Stack
+  component="form"
+  onSubmit={handleUpload}
+  spacing={1}
+  direction={{ xs: 'column', sm: 'row' }}
+  sx={{ mb: 2 }}
+>
+  <input
+    type="file"
+    aria-label="choose file"
+    onChange={e => setFile(e.target.files[0])}
+  />
+  <Button
+    type="submit"
+    variant="contained"
+    aria-label="upload file"
+    disabled={progress !== null}
+  >
+    Upload
+  </Button>
+  {progress !== null && (
+    <Box sx={{ width: '100%' }}>
+      <LinearProgress variant="determinate" value={progress} />
     </Box>
+  )}
+  <Typography variant="body2">
+    {status}
+  </Typography>
+</Stack>
+
   )
 }
