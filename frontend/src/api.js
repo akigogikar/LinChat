@@ -110,3 +110,34 @@ export async function setApiKey(key, model) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function inviteUser(email, teamId) {
+  const form = new FormData();
+  form.append('email', email);
+  if (teamId) form.append('team_id', teamId);
+  const res = await fetch(`${API_BASE}/admin/invite`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function resetPassword(userId) {
+  const form = new FormData();
+  form.append('user_id', userId);
+  const res = await fetch(`${API_BASE}/admin/reset_password`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function createWorkspace(name) {
+  const form = new FormData();
+  form.append('name', name);
+  const res = await fetch(`${API_BASE}/admin/workspaces`, { method: 'POST', body: form });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function deleteWorkspace(id) {
+  const res = await fetch(`${API_BASE}/admin/workspaces/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
