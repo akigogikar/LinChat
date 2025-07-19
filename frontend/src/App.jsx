@@ -4,6 +4,9 @@ import logo from './assets/logo.svg'
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
 import ChatPage from './pages/Chat.jsx'
+import Privacy from './pages/Privacy.jsx'
+import About from './pages/About.jsx'
+import Contact from './pages/Contact.jsx'
 import PersistentChat from './components/PersistentChat.jsx'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
@@ -50,16 +53,19 @@ export default function App() {
 <>
   <Box sx={{ display: 'flex' }}>
     <Box component="main" sx={{ flexGrow: 1, p: 2, mr: '320px' }}>
-      <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<Home />} />
-          <Route path="documents" element={<Documents />} />
-          <Route path="chat" element={<ChatPage />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-        </Route>
-      </Routes>
+<Routes>
+  <Route path="/" element={<AppLayout />}>
+    <Route index element={<Home />} />
+    <Route path="documents" element={<Documents />} />
+    <Route path="chat" element={<ChatPage />} />
+    <Route path="admin" element={<AdminDashboard />} />
+    <Route path="login" element={<Login />} />
+    <Route path="register" element={<Register />} />
+    <Route path="privacy" element={<Privacy />} />
+    <Route path="about" element={<About />} />
+    <Route path="contact" element={<Contact />} />
+  </Route>
+</Routes>
     </Box>
 
     <PersistentChat />
