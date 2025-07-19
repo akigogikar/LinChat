@@ -10,6 +10,8 @@ LinChat is an AI-driven research assistant that brings together your private doc
 - **Structured outputs** including reports, slide decks, tables and charts
 - **Excel and data analysis** powered by a Rust microservice using Polars
 - **Team collaboration** with document sharing and access controls
+- **Workspaces** for organizing shared documents and chats. See
+  [team workspace requirements](docs/team_workspaces.md).
 - **Privacy-first design** suitable for self-hosting or private cloud deployments
 
 ## Technical Overview
