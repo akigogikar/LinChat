@@ -8,6 +8,7 @@ import openai
 import pandas as pd
 import os
 import re
+import json
 from . import config
 import logging
 import asyncio
@@ -29,6 +30,7 @@ from .ingest import parse_file
 from . import vector_db
 from .scraper import scrape_url, scrape_search
 from .analysis_agent import run_custom_analysis
+from .analysis_service_client import analyze_file
 from .reporting import (
     generate_summary,
     generate_table,
@@ -521,6 +523,33 @@ async def custom_analysis(
     result = run_custom_analysis(path, prompt)
     _log_action(user.id, "custom_analysis")
     return result
+
+
+@app.post("/analysis_llm")
+async def analysis_llm(
+    prompt: str, file: UploadFile = File(...), user=Depends(current_active_user)
+):
+    """Run the Rust analysis service and summarize results with the LLM."""
+    os.makedirs("uploads", exist_ok=True)
+    path = os.path.join("uploads", f"{uuid.uuid4()}_{file.filename}")
+    with open(path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    stats, chart = await analyze_file(path)
+    openai.api_key = config._get_api_key()
+    openai.base_url = "https://openrouter.ai/api/v1"
+    messages = [
+        {
+            "role": "system",
+            "content": "Use the analysis results to answer the user question. Do not show any code.",
+        },
+        {"role": "user", "content": f"{prompt}\n\nData:\n{json.dumps(stats)}"},
+    ]
+    completion = openai.ChatCompletion.create(
+        model=config._get_model(), messages=messages
+    )
+    answer = completion.choices[0].message["content"]
+    _log_action(user.id, "analysis_llm")
+    return {"answer": answer, "data": stats, "chart": chart}
 
 
 @app.post("/chat/sessions")

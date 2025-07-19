@@ -40,6 +40,7 @@ auth_stub.current_active_user = lambda: None
 sys.modules.setdefault('app.auth', auth_stub)
 
 import pytest
+from fastapi.testclient import TestClient
 from app import main
 import app.config as config
 
@@ -102,4 +103,40 @@ async def test_query_llm(monkeypatch):
     main.CITATION_STORE.clear()
     result = await main.query_llm("hi", user=User())
     assert result["response"] == "answer"
+
+
+def test_analysis_llm(monkeypatch, tmp_path):
+    monkeypatch.setattr(config, "_get_api_key", lambda: "key")
+    monkeypatch.setattr(config, "_get_model", lambda: "model")
+    main.logger = types.SimpleNamespace(info=lambda *a, **k: None)
+    monkeypatch.setattr(main, "add_audit_log", lambda *a, **k: None)
+
+    async def fake_analyze(path):
+        return [{"col": "A", "mean": 1}], "img"
+
+    monkeypatch.setattr(main, "analyze_file", fake_analyze)
+
+    def fake_create(**kwargs):
+        class Resp:
+            choices = [type("C", (), {"message": {"content": "done"}})]
+
+        return Resp()
+
+    monkeypatch.setattr(main.openai.ChatCompletion, "create", fake_create)
+
+    client = TestClient(main.app)
+    main.app.dependency_overrides[main.current_active_user] = lambda: User()
+    f = tmp_path / "x.xlsx"
+    f.write_text("x")
+    with open(f, "rb") as fh:
+        resp = client.post(
+            "/analysis_llm",
+            params={"prompt": "hi"},
+            files={"file": ("x.xlsx", fh, "application/octet-stream")},
+        )
+    assert resp.status_code == 200
+    j = resp.json()
+    assert j["answer"] == "done"
+    assert j["data"] == [{"col": "A", "mean": 1}]
+    assert j["chart"] == "img"
 
