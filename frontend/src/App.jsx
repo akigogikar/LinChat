@@ -1,13 +1,25 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import { AppBar, Toolbar, Button } from '@mui/material'
 import logo from './assets/logo.svg'
+
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
 import ChatPage from './pages/Chat.jsx'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
+import { Routes, Route, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { AppBar, Toolbar, Button, Box } from '@mui/material'
+import AppLayout from './components/AppLayout.jsx'
 import Onboarding from './components/Onboarding.jsx'
+import Home from './pages/Home.jsx'
+import Documents from './pages/Documents.jsx'
+import ChatPage from './pages/ChatPage.jsx'
+import AdminDashboard from './pages/AdminDashboard.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
+import logo from './assets/logo.svg'
 import './App.css'
 
 export default function App() {
@@ -35,15 +47,22 @@ export default function App() {
           <Button color="inherit" component={Link} to="/register">Register</Button>
         </Toolbar>
       </AppBar>
+
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/documents" element={<Documents />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<Home />} />
+          <Route path="documents" element={<Documents />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="admin" element={<AdminDashboard />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
       </Routes>
+
       <Onboarding open={showOnboarding} onClose={handleCloseOnboarding} />
     </>
+  )
+}
+
   )
 }
