@@ -3,6 +3,9 @@ import { AppBar, Toolbar, Button } from '@mui/material'
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
 import ChatPage from './pages/Chat.jsx'
+import Privacy from './pages/Privacy.jsx'
+import About from './pages/About.jsx'
+import Contact from './pages/Contact.jsx'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
@@ -30,6 +33,9 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
     </>
   )
