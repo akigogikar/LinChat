@@ -1,5 +1,5 @@
 import { Routes, Route, Link } from 'react-router-dom'
-import { AppBar, Toolbar, Button, Box } from '@mui/material'
+import { AppBar, Toolbar, Button } from '@mui/material'
 import logo from './assets/logo.svg'
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
@@ -7,10 +7,20 @@ import ChatPage from './pages/Chat.jsx'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
+import Onboarding from './components/Onboarding.jsx'
 import './App.css'
 
 export default function App() {
   const token = localStorage.getItem('token')
+  const [showOnboarding, setShowOnboarding] = useState(
+    localStorage.getItem('showOnboarding') === 'true'
+  )
+
+  const handleCloseOnboarding = () => {
+    localStorage.setItem('onboardingSeen', 'true')
+    localStorage.setItem('showOnboarding', 'false')
+    setShowOnboarding(false)
+  }
 
   return (
     <>
@@ -33,6 +43,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
+      <Onboarding open={showOnboarding} onClose={handleCloseOnboarding} />
     </>
   )
 }
