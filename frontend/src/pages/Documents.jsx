@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Box, Button } from '@mui/material'
+import { DataGrid } from '@mui/x-data-grid'
 import { getDocuments, deleteDocument, setShared } from '../api.js'
 
 export default function Documents() {
@@ -28,34 +30,43 @@ export default function Documents() {
     setDocs(docs.map(d => (d.id === id ? { ...d, is_shared: res.is_shared } : d)))
   }
 
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'filename', headerName: 'Filename', flex: 1 },
+    {
+      field: 'is_shared',
+      headerName: 'Shared',
+      width: 90,
+      valueGetter: params => (params.row.is_shared ? 'Yes' : 'No'),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 180,
+      sortable: false,
+      renderCell: params => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button size="small" onClick={() => handleDelete(params.row.id)}>
+            Delete
+          </Button>
+          <Button size="small" onClick={() => handleToggle(params.row.id, params.row.is_shared)}>
+            {params.row.is_shared ? 'Unshare' : 'Share'}
+          </Button>
+        </Box>
+      ),
+    },
+  ]
+
   return (
-    <div>
+    <Box>
       <h2>Documents</h2>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Filename</th>
-            <th>Shared</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {docs.map(d => (
-            <tr key={d.id}>
-              <td>{d.id}</td>
-              <td>{d.filename}</td>
-              <td>{d.is_shared ? 'Yes' : 'No'}</td>
-              <td>
-                <button onClick={() => handleDelete(d.id)}>Delete</button>
-                <button onClick={() => handleToggle(d.id, d.is_shared)} style={{ marginLeft: '0.5rem' }}>
-                  {d.is_shared ? 'Unshare' : 'Share'}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <DataGrid
+        autoHeight
+        rows={docs}
+        columns={columns}
+        disableRowSelectionOnClick
+        density="compact"
+      />
+    </Box>
   )
 }
