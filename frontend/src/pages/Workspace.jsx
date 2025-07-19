@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react'
-import { Container, Box, TextField, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
+import {
+  Container, Box, TextField, Button, Typography,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, List, ListItem, ListItemText
+} from '@mui/material'
 import WorkspaceSelector from '../components/WorkspaceSelector.jsx'
 import AuditLogTable from '../admin/AuditLogTable.jsx'
-import { getAdminData, inviteUser, assignWorkspace } from '../api.js'
+import { API_BASE, getWorkspaces, getAdminData, inviteUser, assignWorkspace } from '../api.js'
 
 export default function WorkspacePage() {
+  // For simple public list
+  const [workspaces, setWorkspaces] = useState([])
+
+  // For admin/team view
   const [data, setData] = useState({ users: [], workspaces: [], logs: [] })
   const [workspace, setWorkspace] = useState(null)
   const [inviteEmail, setInviteEmail] = useState('')
 
   useEffect(() => {
-    load()
+    getWorkspaces().then(res => setWorkspaces(res.workspaces || []))
+    loadAdmin()
   }, [])
 
-  async function load() {
+  async function loadAdmin() {
     const d = await getAdminData()
     setData(d)
   }
@@ -24,19 +32,43 @@ export default function WorkspacePage() {
     const res = await inviteUser(inviteEmail, workspace)
     alert(`Password: ${res.password}`)
     setInviteEmail('')
-    load()
+    loadAdmin()
   }
 
   async function handleAssign(userId, teamId) {
     await assignWorkspace(userId, teamId)
-    load()
+    loadAdmin()
   }
 
   const members = data.users.filter(u => u.team_id === workspace)
 
+  const handleCopy = id => {
+    navigator.clipboard.writeText(`${window.location.origin}/workspace/${id}`)
+  }
+
   return (
     <Container sx={{ mt: 2 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>Workspace</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>Workspaces</Typography>
+      {/* Public list of workspaces with Copy Link */}
+      <List>
+        {workspaces.map(ws => (
+          <ListItem
+            key={ws.id}
+            secondaryAction={
+              <Button size="small" onClick={() => handleCopy(ws.id)}>
+                Copy Link
+              </Button>
+            }
+          >
+            <ListItemText primary={ws.name} />
+          </ListItem>
+        ))}
+      </List>
+
+      {/* Divider if you want */}
+      <Box sx={{ my: 3 }} />
+
+      {/* Admin/team management area */}
       <WorkspaceSelector onChange={setWorkspace} />
       {workspace && (
         <>

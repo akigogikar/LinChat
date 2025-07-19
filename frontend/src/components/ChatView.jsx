@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Box,
   Button,
@@ -8,9 +8,8 @@ import {
   Link,
   Stack
 } from '@mui/material'
-import { queryLLM, exportPdf, uploadFile, createChatSession } from '../api.js'
+import { API_BASE, queryLLM, exportPdf, uploadFile, createChatSession } from '../api.js'
 import { useChatSession } from '../ChatContext.jsx'
-
 
 export default function ChatView() {
   const sessionId = useChatSession()
@@ -55,6 +54,13 @@ export default function ChatView() {
       .map(m => `**${m.role === 'user' ? 'User' : 'Assistant'}:** ${m.content}`)
       .join('\n\n')
     const link = await exportPdf(text)
+    // Immediately download PDF
+    const a = document.createElement('a')
+    a.href = link
+    a.download = 'chat.pdf'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
     setPdfUrl(link)
   }
 
@@ -96,6 +102,14 @@ export default function ChatView() {
         aria-label="export conversation as PDF"
       >
         Export PDF
+      </Button>
+      <Button
+        variant="outlined"
+        href={`${API_BASE}/chat/${sessionId}/export/pdf`}
+        target="_blank"
+        sx={{ mt: 2, ml: 1 }}
+      >
+        Share Transcript
       </Button>
       {pdfUrl && (
         <Link href={pdfUrl} download="chat.pdf" sx={{ ml: 1 }}>
