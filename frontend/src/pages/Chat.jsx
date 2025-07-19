@@ -4,7 +4,9 @@ import WorkspaceSelector from '../components/WorkspaceSelector.jsx'
 import { Container, Stack, Typography } from '@mui/material'
 
 export default function ChatPage() {
-  const { workspace, setWorkspace } = useOutletContext()
+
+const { workspace, setWorkspace } = useOutletContext()
+
 
   return (
     <Container sx={{ mt: 2 }}>
