@@ -46,7 +46,7 @@ cargo build --release
 
 The main backend image now also installs the Rust toolchain and `libfontconfig1-dev` so the `/custom_analysis` endpoint can compile generated code.
 
-Authentication for the admin interface uses HTTP basic auth. Update the OpenRouter API key or model via the `/admin` page.
+Authentication for the admin interface uses HTTP basic auth. Update the OpenRouter API key or model via the `/admin` page. The dashboard also provides controls to invite new users or reset existing passwords. API credentials are stored in `config.<env>.json` via the helper functions around [lines 24-32](#getting-started).
 
 ### Environment Configuration
 
