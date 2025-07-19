@@ -153,3 +153,14 @@ export async function deleteWorkspace(id) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function assignWorkspace(userId, teamId) {
+  const form = new FormData();
+  form.append('team_id', teamId);
+  const res = await fetch(`${API_BASE}/users/${userId}/workspace`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
