@@ -6,6 +6,7 @@ import logo from './assets/logo.svg'
 import AppLayout from './components/AppLayout.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import PersistentChat from './components/PersistentChat.jsx'
+import Footer from './components/Footer.jsx'
 
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
@@ -67,6 +68,8 @@ export default function App() {
 
         <PersistentChat />
       </Box>
+
+      <Footer />
 
       <Onboarding open={showOnboarding} onClose={handleCloseOnboarding} />
     </>
