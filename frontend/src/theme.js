@@ -3,16 +3,16 @@ import { createTheme } from '@mui/material/styles'
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#0d47a1',
+      light: '#5472d3',
+      dark: '#002171',
     },
     secondary: {
-      main: '#ff4081',
+      main: '#ffd700',
     },
   },
   typography: {
-    fontFamily: '"Open Sans", Arial, sans-serif',
+    fontFamily: '"Poppins", "Helvetica Neue", Arial, sans-serif',
     h1: {
       fontSize: '2rem',
       fontWeight: 700,

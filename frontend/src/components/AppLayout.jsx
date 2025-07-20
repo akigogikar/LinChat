@@ -12,6 +12,8 @@ import {
   Typography
 } from '@mui/material'
 import WorkspaceSelector from './WorkspaceSelector.jsx'
+import Footer from './Footer.jsx'
+import logo from '../assets/logo.svg'
 
 const drawerWidth = 200
 
@@ -45,7 +47,9 @@ export default function AppLayout() {
           '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' }
         }}
       >
-        <Toolbar />
+        <Toolbar>
+          <Box component="img" src={logo} alt="LinChat" sx={{ height: 32 }} />
+        </Toolbar>
         <List>
           {pages.map(p => (
             <ListItem key={p.path} disablePadding>
@@ -64,6 +68,7 @@ export default function AppLayout() {
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         <Outlet context={{ workspace }} />
+        <Footer />
       </Box>
     </Box>
   )
