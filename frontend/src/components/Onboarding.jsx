@@ -57,6 +57,23 @@ export default function Onboarding({ open, onClose }) {
       ),
     },
     {
+      label: 'Manage Workspaces',
+      content: (
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography sx={{ mb: 2 }}>
+            Create a workspace to collaborate with your team.
+          </Typography>
+          <Tooltip title="Visit the Workspace page to get started">
+            <span>
+              <Button variant="contained" disabled>
+                New Workspace
+              </Button>
+            </span>
+          </Tooltip>
+        </Box>
+      ),
+    },
+    {
       label: 'Export Results',
       content: (
         <Box sx={{ textAlign: 'center' }}>

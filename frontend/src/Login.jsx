@@ -32,6 +32,8 @@ export default function Login() {
         localStorage.setItem('token', data.access_token)
         if (!localStorage.getItem('onboardingSeen')) {
           localStorage.setItem('showOnboarding', 'true')
+        } else {
+          localStorage.setItem('showOnboarding', 'false')
         }
       }
       navigate('/')
