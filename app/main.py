@@ -25,6 +25,7 @@ from .db import (
     allowed_document_ids,
     delete_document,
     set_document_shared,
+    get_document_filename,
 )
 from .ingest import parse_file
 from . import vector_db
@@ -436,9 +437,27 @@ async def get_documents(user=Depends(current_active_user)):
     docs = list_documents(user.id, user.team_id)
     return {
         "documents": [
-            {"id": d[0], "filename": d[1], "is_shared": bool(d[2])} for d in docs
+            {
+                "id": d[0],
+                "filename": d[1],
+                "owner": d[2],
+                "is_shared": bool(d[3]),
+            }
+            for d in docs
         ]
     }
+
+
+@app.get("/documents/{doc_id}")
+async def download_document(doc_id: int, user=Depends(current_active_user)):
+    allowed = allowed_document_ids(user.id, user.team_id)
+    if doc_id not in allowed:
+        raise HTTPException(status_code=404, detail="Document not found")
+    filename = get_document_filename(doc_id)
+    if not filename:
+        raise HTTPException(status_code=404, detail="Document not found")
+    path = os.path.join("uploads", filename)
+    return FileResponse(path, filename=filename)
 
 
 @app.delete("/documents/{doc_id}")

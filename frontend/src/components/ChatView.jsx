@@ -9,7 +9,7 @@ import {
   Stack,
   LinearProgress
 } from '@mui/material'
-import { API_BASE, queryLLM, exportPdf, analysisResults } from '../api.js'
+import { API_BASE, queryLLM, exportPdf, uploadFile } from '../api.js'
 import { useChatSession } from '../ChatContext.jsx'
 
 export default function ChatView() {
@@ -29,12 +29,10 @@ export default function ChatView() {
     if (!file) return
     setUploadProgress(0)
     try {
-      const res = await analysisResults(file, p => setUploadProgress(p))
-      const chartImg = res.chart ? `<img src="data:image/png;base64,${res.chart}" alt="chart" />` : ''
+      await uploadFile(file, false, p => setUploadProgress(p))
       setMessages(m => [
         ...m,
         { role: 'assistant', content: `Uploaded ${file.name}` },
-        { role: 'assistant', content: `${chartImg}<pre>${JSON.stringify(res.data)}</pre>` },
       ])
     } catch (err) {
       setMessages(m => [...m, { role: 'assistant', content: err.toString() }])
