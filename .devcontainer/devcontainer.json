@@ -4,6 +4,6 @@
   "service": "backend",
   "runServices": ["backend", "analysis", "frontend"],
   "workspaceFolder": "/workspace/LinChat",
-  "postCreateCommand": "pip install -r requirements.txt && cd frontend && npm ci",
+  "postCreateCommand": "pip install -r requirements.txt && cd frontend && npm ci --legacy-peer-deps",
   "forwardPorts": [8080, 8002, 8001]
 }
