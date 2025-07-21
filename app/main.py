@@ -617,3 +617,20 @@ def export_pptx(deck: SlideDeck, user=Depends(current_active_user)):
     slide_deck_to_pptx(deck, out_path)
     _log_action(user.id, "export_pptx")
     return FileResponse(out_path, media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", filename="output.pptx")
+
+
+@app.post("/analysis/results")
+async def analysis_results(file: UploadFile = File(...), user=Depends(current_active_user)):
+    """Return raw analysis results from the Rust service with any code removed."""
+    os.makedirs("uploads", exist_ok=True)
+    path = os.path.join("uploads", f"{uuid.uuid4()}_{file.filename}")
+    with open(path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    stats, chart = await analyze_file(path)
+    filtered = []
+    for entry in stats:
+        if isinstance(entry, str):
+            entry = re.sub(r"```.*?```", "", entry, flags=re.S)
+        filtered.append(entry)
+    _log_action(user.id, "analysis_results")
+    return {"data": filtered, "chart": chart}

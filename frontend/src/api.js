@@ -61,6 +61,24 @@ export async function analyzeFile(file, onProgress) {
   }
 }
 
+export async function analysisResults(file, onProgress) {
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await axios.post(`${API_BASE}/analysis/results`, form, {
+      onUploadProgress: e => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      }
+    });
+    return res.data;
+  } catch (err) {
+    const msg = err.response?.data?.detail || err.message;
+    throw new Error(msg);
+  }
+}
+
 export async function getCitation(reqId, cid) {
   const res = await fetch(`${API_BASE}/source/${reqId}/${cid}`);
   if (!res.ok) throw new Error(await res.text());

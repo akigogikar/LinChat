@@ -6,9 +6,10 @@ import {
   Paper,
   Typography,
   Link,
-  Stack
+  Stack,
+  LinearProgress
 } from '@mui/material'
-import { API_BASE, queryLLM, exportPdf, uploadFile, createChatSession } from '../api.js'
+import { API_BASE, queryLLM, exportPdf, analysisResults } from '../api.js'
 import { useChatSession } from '../ChatContext.jsx'
 
 export default function ChatView() {
@@ -16,6 +17,7 @@ export default function ChatView() {
   const [prompt, setPrompt] = useState('')
   const [messages, setMessages] = useState([])
   const [pdfUrl, setPdfUrl] = useState(null)
+  const [uploadProgress, setUploadProgress] = useState(null)
 
   function handleDragOver(e) {
     e.preventDefault()
@@ -25,14 +27,19 @@ export default function ChatView() {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
     if (!file) return
+    setUploadProgress(0)
     try {
-      const res = await uploadFile(file)
+      const res = await analysisResults(file, p => setUploadProgress(p))
+      const chartImg = res.chart ? `<img src="data:image/png;base64,${res.chart}" alt="chart" />` : ''
       setMessages(m => [
         ...m,
-        { role: 'assistant', content: `Uploaded ${res.document_id}` },
+        { role: 'assistant', content: `Uploaded ${file.name}` },
+        { role: 'assistant', content: `${chartImg}<pre>${JSON.stringify(res.data)}</pre>` },
       ])
     } catch (err) {
       setMessages(m => [...m, { role: 'assistant', content: err.toString() }])
+    } finally {
+      setUploadProgress(null)
     }
   }
 
@@ -94,6 +101,11 @@ export default function ChatView() {
           </Paper>
         ))}
       </Stack>
+      {uploadProgress !== null && (
+        <Box sx={{ mt: 1 }}>
+          <LinearProgress variant="determinate" value={uploadProgress} />
+        </Box>
+      )}
 
       <Button
         variant="contained"
