@@ -82,17 +82,33 @@ def add_audit_log(user_id: int, action: str) -> None:
     conn.close()
 
 
-def list_documents(user_id: int, team_id: Optional[int]) -> List[Tuple[int, str, int]]:
+def list_documents(
+    user_id: int, team_id: Optional[int]
+) -> List[Tuple[int, str, Optional[str], int]]:
+    """Return document metadata including owner email."""
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, filename, is_shared FROM documents WHERE owner_id=?"
-        " OR (team_id=? AND is_shared=1)",
+        "SELECT d.id, d.filename, u.email, d.is_shared"
+        " FROM documents d LEFT JOIN users u ON d.owner_id = u.id"
+        " WHERE d.owner_id=? OR (d.team_id=? AND d.is_shared=1)",
         (user_id, team_id),
     )
     rows = cur.fetchall()
     conn.close()
     return rows
+
+
+def get_document_filename(doc_id: int) -> Optional[str]:
+    """Return stored filename for a document id."""
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("SELECT filename FROM documents WHERE id=?", (doc_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return row[0]
+    return None
 
 
 def allowed_document_ids(user_id: int, team_id: Optional[int]) -> List[int]:
