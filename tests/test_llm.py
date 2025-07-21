@@ -140,3 +140,25 @@ def test_analysis_llm(monkeypatch, tmp_path):
     assert j["data"] == [{"col": "A", "mean": 1}]
     assert j["chart"] == "img"
 
+
+def test_analysis_results(monkeypatch, tmp_path):
+    main.logger = types.SimpleNamespace(info=lambda *a, **k: None)
+    monkeypatch.setattr(main, "add_audit_log", lambda *a, **k: None)
+
+    async def fake_analyze(path):
+        return [{"col": "B", "sum": 2}], "png"
+
+    monkeypatch.setattr(main, "analyze_file", fake_analyze)
+
+    client = TestClient(main.app)
+    main.app.dependency_overrides[main.current_active_user] = lambda: User()
+    f = tmp_path / "y.xlsx"
+    f.write_text("y")
+    with open(f, "rb") as fh:
+        resp = client.post(
+            "/analysis/results",
+            files={"file": ("y.xlsx", fh, "application/octet-stream")},
+        )
+    assert resp.status_code == 200
+    assert resp.json() == {"data": [{"col": "B", "sum": 2}], "chart": "png"}
+
