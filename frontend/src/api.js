@@ -2,15 +2,35 @@ import axios from 'axios';
 
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+function friendlyMessage(msg) {
+  if (!msg) return 'An unexpected error occurred.';
+  if (msg.length > 200 || /traceback/i.test(msg)) {
+    return 'An unexpected error occurred.';
+  }
+  return msg;
+}
+
+async function fetchJson(url, options = {}) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    let msg;
+    try {
+      const data = await res.json();
+      msg = data.detail || data.message;
+    } catch {
+      msg = await res.text();
+    }
+    throw new Error(friendlyMessage(msg));
+  }
+  return res.json();
+}
 
 export async function queryLLM(prompt, sessionId) {
-  const res = await fetch(`${API_BASE}/query`, {
+  return fetchJson(`${API_BASE}/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, session_id: sessionId })
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function uploadFile(file, shared = false, onProgress) {
@@ -27,19 +47,17 @@ export async function uploadFile(file, shared = false, onProgress) {
     });
     return res.data;
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message;
-    throw new Error(msg);
+    const msg = err.response?.data?.detail || err.response?.data?.message || err.message;
+    throw new Error(friendlyMessage(msg));
   }
 }
 
 export async function generateTable(prompt) {
-  const res = await fetch(`${API_BASE}/generate_table`, {
+  return fetchJson(`${API_BASE}/generate_table`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt })
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function analyzeFile(file, onProgress) {
@@ -56,8 +74,8 @@ export async function analyzeFile(file, onProgress) {
     const chart = res.headers['chart'];
     return { data: res.data, chart };
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message;
-    throw new Error(msg);
+    const msg = err.response?.data?.detail || err.response?.data?.message || err.message;
+    throw new Error(friendlyMessage(msg));
   }
 }
 
@@ -74,15 +92,13 @@ export async function analysisResults(file, onProgress) {
     });
     return res.data;
   } catch (err) {
-    const msg = err.response?.data?.detail || err.message;
-    throw new Error(msg);
+    const msg = err.response?.data?.detail || err.response?.data?.message || err.message;
+    throw new Error(friendlyMessage(msg));
   }
 }
 
 export async function getCitation(reqId, cid) {
-  const res = await fetch(`${API_BASE}/source/${reqId}/${cid}`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/source/${reqId}/${cid}`);
 }
 
 export async function exportPdf(content) {
@@ -91,116 +107,115 @@ export async function exportPdf(content) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content })
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    let msg;
+    try { msg = await res.text(); } catch { msg = ''; }
+    throw new Error(friendlyMessage(msg));
+  }
   const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
 
 export async function createChatSession() {
-  const res = await fetch(`${API_BASE}/chat/sessions`, { method: 'POST' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/chat/sessions`, { method: 'POST' });
 }
 
 export async function getWorkspaces() {
-  const res = await fetch(`${API_BASE}/workspaces`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/workspaces`);
 }
 
 export async function loginUser(username, password) {
-  const res = await fetch(`${API_BASE}/auth/jwt/login`, {
+  return fetchJson(`${API_BASE}/auth/jwt/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function registerUser(user) {
-  const res = await fetch(`${API_BASE}/auth/register`, {
+  return fetchJson(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user)
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 
 export async function getDocuments() {
-  const res = await fetch(`${API_BASE}/documents`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/documents`);
 }
 
 export async function deleteDocument(id) {
-  const res = await fetch(`${API_BASE}/documents/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/documents/${id}`, { method: 'DELETE' });
 }
 
 
 export async function setShared(id, shared) {
-  const res = await fetch(`${API_BASE}/documents/${id}/share?shared=${shared}`, { method: 'POST' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/documents/${id}/share?shared=${shared}`, { method: 'POST' });
 }
 
 export async function getAdminData() {
-  const res = await fetch(`${API_BASE}/admin/data`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/data`);
 }
 
 export async function setApiKey(key, model) {
   const form = new FormData();
   form.append('key', key);
   if (model) form.append('model', model);
-  const res = await fetch(`${API_BASE}/admin/set_key`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/set_key`, { method: 'POST', body: form });
 }
 
 export async function inviteUser(email, teamId) {
   const form = new FormData();
   form.append('email', email);
   if (teamId) form.append('team_id', teamId);
-  const res = await fetch(`${API_BASE}/admin/invite`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/invite`, { method: 'POST', body: form });
 }
 
 export async function resetPassword(userId) {
   const form = new FormData();
   form.append('user_id', userId);
-  const res = await fetch(`${API_BASE}/admin/reset_password`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/reset_password`, { method: 'POST', body: form });
 }
 
 export async function createWorkspace(name) {
   const form = new FormData();
   form.append('name', name);
-  const res = await fetch(`${API_BASE}/admin/workspaces`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/workspaces`, { method: 'POST', body: form });
 }
 
 export async function deleteWorkspace(id) {
-  const res = await fetch(`${API_BASE}/admin/workspaces/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return fetchJson(`${API_BASE}/admin/workspaces/${id}`, { method: 'DELETE' });
 }
 
 export async function assignWorkspace(userId, teamId) {
   const form = new FormData();
   form.append('team_id', teamId);
-  const res = await fetch(`${API_BASE}/users/${userId}/workspace`, {
+  return fetchJson(`${API_BASE}/users/${userId}/workspace`, {
     method: 'POST',
     body: form,
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+}
+
+export async function customAnalysis(prompt, file, onProgress) {
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await axios.post(
+      `${API_BASE}/custom_analysis?prompt=${encodeURIComponent(prompt)}`,
+      form,
+      {
+        onUploadProgress: e => {
+          if (onProgress && e.total) {
+            onProgress(Math.round((e.loaded * 100) / e.total));
+          }
+        }
+      }
+    );
+    const chart = res.headers['chart'];
+    return { data: res.data, chart };
+  } catch (err) {
+    const msg = err.response?.data?.detail || err.response?.data?.message || err.message;
+    throw new Error(friendlyMessage(msg));
+  }
 }

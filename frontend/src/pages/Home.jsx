@@ -2,6 +2,7 @@ import FileUpload from '../components/FileUpload.jsx'
 import QueryForm from '../components/QueryForm.jsx'
 import TableGenerator from '../components/TableGenerator.jsx'
 import ChartUploader from '../components/ChartUploader.jsx'
+import CustomAnalysis from '../components/CustomAnalysis.jsx'
 import ExportButtons from '../components/ExportButtons.jsx'
 import { useState } from 'react'
 import { Stack } from '@mui/material'
@@ -16,6 +17,7 @@ export default function Home() {
       <QueryForm onAnswer={setLastAnswer} />
       <TableGenerator />
       <ChartUploader />
+      <CustomAnalysis />
       <ExportButtons content={lastAnswer} />
     </Stack>
   )
