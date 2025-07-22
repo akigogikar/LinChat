@@ -24,7 +24,7 @@ class TestClient:
                 dep_fn = self.app.dependency_overrides.get(param.default.dependency, param.default.dependency)
                 val = dep_fn()
                 if asyncio.iscoroutine(val):
-                    val = asyncio.get_event_loop().run_until_complete(val)
+                    val = asyncio.run(val)
                 kwargs[name] = val
             elif files and name == 'file':
                 file_tuple = files['file']
@@ -35,7 +35,7 @@ class TestClient:
                 kwargs[name] = data[name]
         result = handler(**kwargs)
         if asyncio.iscoroutine(result):
-            result = asyncio.get_event_loop().run_until_complete(result)
+            result = asyncio.run(result)
         status = 200
         if isinstance(result, dict):
             data = result

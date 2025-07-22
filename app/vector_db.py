@@ -3,7 +3,8 @@ from typing import Iterable, List, Dict
 
 from chromadb import PersistentClient
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
+import openai
+from . import config
 
 DB_DIR = os.getenv(
     "LINCHAT_VECTOR_DIR",
@@ -13,7 +14,7 @@ COLLECTION_NAME = "documents"
 
 _client = None
 _collection = None
-_model = None
+
 
 
 def _get_client() -> PersistentClient:
@@ -34,12 +35,15 @@ def _get_collection():
     return _collection
 
 
-def _get_model() -> SentenceTransformer:
-    """Load the sentence transformer model lazily."""
-    global _model
-    if _model is None:
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
-    return _model
+EMBEDDING_MODEL = os.getenv("OPENROUTER_EMBED_MODEL", "openai/text-embedding-ada-002")
+
+
+def _embed(texts: List[str]) -> List[List[float]]:
+    """Return vector embeddings from the external API."""
+    openai.api_key = config._get_api_key()
+    openai.base_url = "https://openrouter.ai/api/v1"
+    response = openai.Embedding.create(model=EMBEDDING_MODEL, input=texts)
+    return [d["embedding"] for d in response["data"]]
 
 
 def add_embeddings(
@@ -47,7 +51,6 @@ def add_embeddings(
 ) -> None:
     """Embed and store document chunks in the vector database."""
     collection = _get_collection()
-    model = _get_model()
     texts: List[str] = []
     ids: List[str] = []
     metadata: List[Dict] = []
@@ -63,15 +66,14 @@ def add_embeddings(
         )
     if not texts:
         return
-    embeddings = model.encode(texts).tolist()
+    embeddings = _embed(texts)
     collection.add(documents=texts, embeddings=embeddings, ids=ids, metadatas=metadata)
 
 
 def add_web_embeddings(url: str, text: str, workspace_id: int | None = None) -> None:
     """Embed and store web page text with URL metadata."""
     collection = _get_collection()
-    model = _get_model()
-    embedding = model.encode([text]).tolist()
+    embedding = _embed([text])
     collection.add(
         documents=[text],
         embeddings=embedding,
@@ -88,8 +90,7 @@ def query(
 ) -> List[Dict]:
     """Return the most relevant chunks for the given text query."""
     collection = _get_collection()
-    model = _get_model()
-    query_emb = model.encode([text]).tolist()
+    query_emb = _embed([text])
 
     fetch_k = max(top_k * 5, top_k)
     results = collection.query(query_embeddings=query_emb, n_results=fetch_k)

@@ -3,17 +3,12 @@ import types
 
 sys.modules.setdefault('chromadb', types.SimpleNamespace(PersistentClient=object))
 sys.modules.setdefault('chromadb.config', types.SimpleNamespace(Settings=object))
-sys.modules.setdefault('sentence_transformers', types.SimpleNamespace(SentenceTransformer=lambda x: None))
+
 
 from app import vector_db
 
-class DummyModel:
-    class Emb(list):
-        def tolist(self):
-            return list(self)
-
-    def encode(self, texts):
-        return self.Emb([[len(t)] for t in texts])
+def dummy_embed(texts):
+    return [[len(t)] for t in texts]
 
 class DummyCollection:
     def __init__(self):
@@ -33,7 +28,7 @@ class DummyCollection:
 def test_add_and_query(monkeypatch):
     collection = DummyCollection()
     monkeypatch.setattr(vector_db, "_get_collection", lambda: collection)
-    monkeypatch.setattr(vector_db, "_get_model", lambda: DummyModel())
+    monkeypatch.setattr(vector_db, "_embed", dummy_embed)
 
     vector_db.add_embeddings(1, [{"page": 1, "text": "hello"}], workspace_id=1)
     res = vector_db.query("hello", top_k=1, workspace_id=1)
@@ -43,7 +38,7 @@ def test_add_and_query(monkeypatch):
 def test_add_web_embeddings(monkeypatch):
     collection = DummyCollection()
     monkeypatch.setattr(vector_db, "_get_collection", lambda: collection)
-    monkeypatch.setattr(vector_db, "_get_model", lambda: DummyModel())
+    monkeypatch.setattr(vector_db, "_embed", dummy_embed)
 
     vector_db.add_web_embeddings("http://example.com", "web text", workspace_id=2)
     res = vector_db.query("web", top_k=1, workspace_id=2)

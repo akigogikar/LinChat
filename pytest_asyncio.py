@@ -8,5 +8,5 @@ def pytest_configure(config):
 def pytest_pyfunc_call(pyfuncitem):
     if pyfuncitem.get_closest_marker("asyncio"):
         func = pyfuncitem.obj
-        asyncio.get_event_loop().run_until_complete(func(**pyfuncitem.funcargs))
+        asyncio.run(func(**pyfuncitem.funcargs))
         return True
