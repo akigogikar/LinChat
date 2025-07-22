@@ -10,6 +10,7 @@ import Footer from './components/Footer.jsx'
 
 import Home from './pages/Home.jsx'
 import Documents from './pages/Documents.jsx'
+// Route used to mistakenly import from "ChatPage.jsx"; ensure path matches filename
 import ChatPage from './pages/Chat.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
 import Login from './Login.jsx'
