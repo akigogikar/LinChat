@@ -16,7 +16,6 @@ _client = None
 _collection = None
 
 
-
 def _get_client() -> PersistentClient:
     """Return a persistent chroma client."""
     global _client
