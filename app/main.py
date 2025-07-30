@@ -391,20 +391,32 @@ async def create_workspace(
 
 @app.get("/workspaces")
 async def user_workspaces(user=Depends(current_active_user)):
-    """Return all workspaces."""
+    """Return workspaces the current user belongs to."""
     async with async_session_maker() as session:
-        teams = (await session.execute(select(Team))).scalars().all()
+        if user.team_id is None:
+            teams = []
+        else:
+            teams = (
+                await session.execute(select(Team).where(Team.id == user.team_id))
+            ).scalars().all()
     return {"workspaces": [{"id": t.id, "name": t.name} for t in teams]}
 
 
 @app.post("/workspaces")
 async def create_user_workspace(name: str = Form(...), user=Depends(current_active_user)):
-    """Allow any user to create a new workspace."""
+    """Allow any user to create a new workspace and join it."""
     async with async_session_maker() as session:
         team = Team(name=name)
         session.add(team)
         await session.commit()
         await session.refresh(team)
+
+        # assign the creating user to the new workspace
+        user_obj = await session.get(User, user.id)
+        if user_obj:
+            user_obj.team_id = team.id
+            await session.commit()
+
     return {"id": team.id, "name": team.name}
 
 
